@@ -1,0 +1,2274 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>نظام إدارة مصاريف الشركة</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config={theme:{extend:{colors:{brand:{50:'#f0f4ff',100:'#dde6ff',200:'#c0cfff',300:'#93abff',400:'#6580ff',500:'#3d57fb',600:'#2638f0',700:'#1e2cd6',800:'#1e27ac',900:'#1e2688'}},fontFamily:{arabic:['"Noto Sans Arabic"','sans-serif'],mono:['"Inter"','monospace']}}}};
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{font-family:'Noto Sans Arabic',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh}
+.num{font-family:'Inter',sans-serif}
+#sidebar{width:260px;min-height:100vh;background:linear-gradient(160deg,#1e2688 0%,#2638f0 60%,#3d57fb 100%);position:fixed;top:0;right:0;z-index:50;display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(38,56,240,.18);transition:transform .3s}
+#sidebar .logo-area{padding:28px 20px 20px;border-bottom:1px solid rgba(255,255,255,.12)}
+#sidebar nav a{display:flex;align-items:center;gap:10px;padding:11px 20px;color:rgba(255,255,255,.75);border-radius:8px;margin:2px 10px;font-size:14px;font-weight:500;transition:background .18s,color .18s;cursor:pointer}
+#sidebar nav a:hover,#sidebar nav a.active{background:rgba(255,255,255,.15);color:#fff}
+#sidebar nav a.active{background:rgba(255,255,255,.22);font-weight:700}
+#main{margin-right:260px;min-height:100vh;padding:28px 32px}
+.page{display:none}.page.active{display:block}
+.card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(38,56,240,.05);padding:24px}
+.stat-card{border-radius:14px;padding:20px 24px;color:#fff;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.08);bottom:-30px;left:-20px}
+.form-input{width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-family:'Noto Sans Arabic',sans-serif;font-size:14px;color:#1e293b;background:#f8fafc;transition:border .18s,box-shadow .18s;outline:none}
+.form-input:focus{border-color:#3d57fb;box-shadow:0 0 0 3px rgba(61,87,251,.12);background:#fff}
+.form-label{display:block;font-size:13px;font-weight:600;color:#475569;margin-bottom:5px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;border-radius:8px;font-family:'Noto Sans Arabic',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;border:none;outline:none}
+.btn-primary{background:linear-gradient(135deg,#3d57fb,#2638f0);color:#fff;box-shadow:0 2px 8px rgba(38,56,240,.25)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(38,56,240,.35)}
+.btn-secondary{background:#f1f5f9;color:#475569;border:1.5px solid #e2e8f0}
+.btn-secondary:hover{background:#e2e8f0}
+.btn-danger{background:#fee2e2;color:#dc2626;border:1.5px solid #fecaca}
+.btn-danger:hover{background:#fecaca}
+.btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.btn-warning{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
+.data-table{width:100%;border-collapse:collapse;font-size:14px}
+.data-table thead th{background:#f8fafc;color:#64748b;font-size:12px;font-weight:700;padding:10px 14px;text-align:right;border-bottom:1.5px solid #e2e8f0;text-transform:uppercase}
+.data-table tbody tr{border-bottom:1px solid #f1f5f9;transition:background .12s}
+.data-table tbody tr:hover{background:#f8fafc}
+.data-table tbody td{padding:11px 14px;color:#334155}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:16px;padding:28px;width:90%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.18);animation:slideIn .22s ease}
+@keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e293b;color:#fff;padding:12px 24px;border-radius:40px;font-size:14px;font-weight:600;z-index:999;transition:transform .3s,opacity .3s;opacity:0;pointer-events:none}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+#toast.success{background:#059669}#toast.error{background:#dc2626}
+.section-title{font-size:18px;font-weight:800;color:#1e2688;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.cat-advances{background:#dbeafe;color:#1d4ed8}
+.cat-solar-fund{background:#fef3c7;color:#b45309}
+.cat-solar-exp{background:#fef9c3;color:#a16207}
+.cat-office{background:#dcfce7;color:#15803d}
+.cat-car{background:#fee2e2;color:#b91c1c}
+.cat-telecom{background:#f3e8ff;color:#7e22ce}
+.cat-other{background:#f1f5f9;color:#475569}
+.cat-delegate{background:#fce7f3;color:#9d174d}
+.cat-vac-annual{background:#dbeafe;color:#1d4ed8}.cat-vac-sick{background:#dcfce7;color:#15803d}.cat-vac-emergency{background:#fef3c7;color:#b45309}.cat-vac-unpaid{background:#fee2e2;color:#b91c1c}.cat-vac-maternity{background:#fce7f3;color:#9d174d}.cat-vac-other{background:#f1f5f9;color:#475569}.vac-gauge{border-radius:999px;height:18px;overflow:hidden;background:#e2e8f0}.vac-gauge-fill{height:100%;border-radius:999px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.archive-banner{background:linear-gradient(135deg,#7c2d12,#c2410c);color:#fff;border-radius:12px;padding:14px 20px;display:flex;align-items:center;gap:10px;margin-bottom:20px;font-weight:700;font-size:14px}
+@media print{
+  body *{visibility:hidden!important}
+  #printArea,#printArea *{visibility:visible!important}
+  #printArea{position:fixed!important;top:0;right:0;left:0;width:100%;background:#fff;z-index:9999;padding:20px 30px;font-family:'Noto Sans Arabic',sans-serif;font-size:13px;color:#000}
+  .no-print{display:none!important}.print-only{display:block!important}
+  table{border-collapse:collapse;width:100%}
+  th,td{border:1px solid #000;padding:6px 10px}
+  th{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.print-only{display:none}
+@media(max-width:768px){#sidebar{transform:translateX(100%)}#sidebar.open{transform:translateX(0)}#main{margin-right:0;padding:16px}#menuBtn{display:flex!important}}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<aside id="sidebar">
+  <div class="logo-area">
+    <div class="flex items-center gap-3 mb-1">
+      <div style="background:rgba(255,255,255,.18);border-radius:10px;padding:8px;">
+        <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+      </div>
+      <div>
+        <div class="text-white font-bold text-base leading-tight">مصاريف الشركة</div>
+        <div class="text-blue-200 text-xs mt-0.5">نظام إدارة العهد والمصاريف</div>
+      </div>
+    </div>
+  </div>
+  <nav class="flex-1 py-4">
+    <div class="px-4 pb-2 text-blue-200 text-xs font-semibold uppercase tracking-wider">القائمة الرئيسية</div>
+    <a onclick="showPage('dashboard')" class="active" data-page="dashboard">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>لوحة التحكم</a>
+    <a onclick="showPage('employees')" data-page="employees">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>إدارة الموظفين</a>
+    <a onclick="showPage('addExpense')" data-page="addExpense">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>تسجيل مصروف جديد</a>
+    <a onclick="showPage('expenses')" data-page="expenses">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>سجل المصاريف</a>
+    <a onclick="showPage('empStatement')" data-page="empStatement">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><polyline points="9 11 12 14 22 4"/></svg>كشف حساب موظف</a>
+    <a onclick="showPage('solarFund')" data-page="solarFund">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>صندوق السولار</a>
+    <a onclick="showPage('delegates')" data-page="delegates">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>المندوبون والبدل اليومي</a>
+    <a onclick="showPage('reports')" data-page="reports">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>التقارير المتقدمة</a>
+    <a onclick="showPage('vacations')" data-page="vacations">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>عطل الموظفين</a>
+    <a onclick="showPage('archives')" data-page="archives">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>أرشيف الأشهر السابقة</a>
+    <div class="px-4 pt-4 pb-2 text-blue-200 text-xs font-semibold uppercase tracking-wider">البيانات</div>
+    <a onclick="exportData()">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>تصدير البيانات (JSON)</a>
+    <a onclick="document.getElementById('importFile').click()">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>استيراد البيانات (JSON)</a>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)"/>
+  </nav>
+  <div class="px-4 pb-6 text-blue-200 text-xs text-center opacity-60">v3.0 — جميع البيانات محفوظة محلياً</div>
+</aside>
+
+<button id="menuBtn" onclick="document.getElementById('sidebar').classList.toggle('open')" class="hidden fixed top-4 right-4 z-50 bg-blue-700 text-white p-2 rounded-lg shadow-lg">
+  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
+<main id="main">
+
+<!-- PAGE: DASHBOARD -->
+<div id="page-dashboard" class="page active">
+  <div class="mb-4 flex items-center justify-between flex-wrap gap-3">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-800">لوحة التحكم</h1>
+      <p class="text-slate-500 text-sm mt-1">نظرة عامة على مصاريف الشركة — الشهر الحالي</p>
+    </div>
+    <div class="flex items-center gap-2 bg-white rounded-xl px-4 py-2 shadow-sm border border-slate-100">
+      <svg width="18" height="18" fill="none" stroke="#2638f0" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="text-sm font-bold text-slate-700" id="currentMonthLabel">—</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="stat-card" style="background:linear-gradient(135deg,#2638f0,#3d57fb);">
+      <div class="text-blue-100 text-xs font-semibold uppercase tracking-wider mb-2">إجمالي المصاريف (هذا الشهر)</div>
+      <div class="text-3xl font-extrabold num" id="statTotal">0</div>
+      <div class="text-blue-200 text-sm mt-1">شيكل</div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#7e22ce,#9333ea);">
+      <div class="text-purple-100 text-xs font-semibold uppercase tracking-wider mb-2">إجمالي السلف (هذا الشهر)</div>
+      <div class="text-3xl font-extrabold num" id="statAdvances">0</div>
+      <div class="text-purple-200 text-sm mt-1">شيكل</div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#b45309,#f59e0b);">
+      <div class="text-amber-100 text-xs font-semibold uppercase tracking-wider mb-2">رصيد صندوق السولار</div>
+      <div class="text-3xl font-extrabold num" id="statSolarBalance">0</div>
+      <div class="text-amber-200 text-sm mt-1">شيكل متبقي (إجمالي تاريخي)</div>
+      <div class="text-amber-100 text-xs mt-1 num" id="statSolarMeta"></div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#9d174d,#ec4899);">
+      <div class="text-pink-100 text-xs font-semibold uppercase tracking-wider mb-2">بدل المندوبين (هذا الشهر)</div>
+      <div class="text-3xl font-extrabold num" id="statDelegates">0</div>
+      <div class="text-pink-200 text-sm mt-1">شيكل</div>
+      <div class="text-pink-100 text-xs mt-1 num" id="statDelegatesMeta"></div>
+    </div>
+  </div>
+
+  <div class="card mb-6">
+    <div class="section-title"><svg width="18" height="18" fill="none" stroke="#2638f0" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>ملخص حسب بند المصروف (هذا الشهر)</div>
+    <div id="dashCategorySummary" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title"><svg width="18" height="18" fill="none" stroke="#2638f0" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>آخر العمليات المسجلة (هذا الشهر)</div>
+    <div class="overflow-x-auto">
+      <table class="data-table"><thead><tr><th>التاريخ</th><th>البند</th><th>البيان</th><th>الموظف</th><th>المبلغ (₪)</th></tr></thead>
+      <tbody id="dashRecentBody"><tr><td colspan="5" class="text-center text-slate-400 py-8">لا توجد عمليات مسجلة بعد</td></tr></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: EMPLOYEES -->
+<div id="page-employees" class="page">
+  <div class="mb-6"><h1 class="text-2xl font-extrabold text-slate-800">إدارة الموظفين</h1><p class="text-slate-500 text-sm mt-1">أضف موظفين ومندوبين لاختيارهم عند تسجيل السلف والمصاريف</p></div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="card lg:col-span-1">
+      <div class="section-title"><svg width="16" height="16" fill="none" stroke="#2638f0" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="12" y1="11" x2="12" y2="15"/><line x1="10" y1="13" x2="14" y2="13"/></svg>إضافة موظف / مندوب</div>
+      <div class="space-y-4">
+        <div><label class="form-label">الاسم الكامل *</label><input type="text" id="empName" class="form-input" placeholder="أدخل الاسم الكامل"/></div>
+        <div><label class="form-label">رقم الهاتف</label><input type="text" id="empPhone" class="form-input" placeholder="05x-xxxxxxx" dir="ltr"/></div>
+        <div><label class="form-label">المسمى الوظيفي</label><input type="text" id="empTitle" class="form-input" placeholder="مثال: سائق، مندوب، محاسب..."/></div>
+        <div><label class="form-label">النوع</label>
+          <select id="empType" class="form-input" onchange="document.getElementById('empRateWrapper').classList.toggle('hidden', this.value!=='مندوب')">
+            <option value="موظف">موظف</option>
+            <option value="مندوب">مندوب (سيارة خاصة + بدل يومي)</option>
+          </select>
+        </div>
+        <div id="empRateWrapper" class="hidden">
+          <label class="form-label">البدل اليومي الافتراضي (₪)</label>
+          <input type="number" id="empDefaultRate" class="form-input" value="100" min="0" step="0.5" dir="ltr"/>
+        </div>
+        <button class="btn btn-primary w-full" onclick="addEmployee()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>حفظ</button>
+      </div>
+    </div>
+    <div class="card lg:col-span-2">
+      <div class="section-title"><svg width="16" height="16" fill="none" stroke="#2638f0" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>قائمة الموظفين والمندوبين <span id="empCount" class="ml-2 bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">0</span></div>
+      <div class="overflow-x-auto">
+        <table class="data-table"><thead><tr><th>#</th><th>الاسم</th><th>الهاتف</th><th>المسمى</th><th>النوع</th><th>إجمالي السلف (هذا الشهر) ₪</th><th>إجراء</th></tr></thead>
+        <tbody id="empTableBody"><tr><td colspan="7" class="text-center text-slate-400 py-8">لا يوجد موظفون مضافون بعد</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: ADD EXPENSE -->
+<div id="page-addExpense" class="page">
+  <div class="mb-6"><h1 class="text-2xl font-extrabold text-slate-800">تسجيل مصروف جديد</h1></div>
+  <div class="card max-w-2xl mx-auto">
+    <div class="space-y-5">
+      <div><label class="form-label">📅 التاريخ *</label><input type="date" id="expDate" class="form-input"/></div>
+      <div><label class="form-label">📂 بند المصروف *</label>
+        <select id="expCategory" class="form-input" onchange="populateEmpSelects()">
+          <option value="">-- اختر بند المصروف --</option>
+          <option value="سلف موظفين">👤 سلف موظفين</option>
+          <option value="صندوق سولار">⛽ صندوق سولار</option>
+          <option value="مصروف سولار">🔋 مصروف سولار</option>
+          <option value="مصروفات مكتبية">🖊️ مصروفات مكتبية</option>
+          <option value="صيانة سيارات">🔧 صيانة سيارات</option>
+          <option value="اتصالات">📞 اتصالات</option>
+          <option value="مصاريف أخرى">📋 مصاريف أخرى</option>
+        </select>
+      </div>
+      <div><label class="form-label">💰 المبلغ (₪) *</label><input type="number" id="expAmount" class="form-input" placeholder="0.00" min="0" step="0.01" dir="ltr"/></div>
+      <div><label class="form-label">👤 الموظف المسؤول</label>
+        <select id="expEmployee" class="form-input"><option value="">-- لا يوجد --</option></select>
+      </div>
+      <div><label class="form-label">📝 البيان</label><textarea id="expDesc" class="form-input" rows="3" placeholder="وصف مختصر..."></textarea></div>
+      <div class="flex gap-3 pt-2">
+        <button class="btn btn-primary flex-1" onclick="addExpense()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>حفظ المصروف</button>
+        <button class="btn btn-secondary" onclick="clearExpenseForm()">مسح</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: EXPENSES LIST -->
+<div id="page-expenses" class="page">
+  <div class="mb-6"><h1 class="text-2xl font-extrabold text-slate-800">سجل المصاريف (الشهر الحالي)</h1></div>
+  <div class="card mb-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div><label class="form-label">فلتر: البند</label>
+        <select id="filterCat" class="form-input" onchange="renderExpensesTable()">
+          <option value="">الكل</option>
+          <option value="سلف موظفين">سلف موظفين</option><option value="صندوق سولار">صندوق سولار</option>
+          <option value="مصروف سولار">مصروف سولار</option><option value="مصروفات مكتبية">مصروفات مكتبية</option>
+          <option value="صيانة سيارات">صيانة سيارات</option><option value="اتصالات">اتصالات</option><option value="مصاريف أخرى">مصاريف أخرى</option>
+        </select>
+      </div>
+      <div><label class="form-label">من تاريخ</label><input type="date" id="filterFrom" class="form-input" onchange="renderExpensesTable()"/></div>
+      <div><label class="form-label">إلى تاريخ</label><input type="date" id="filterTo" class="form-input" onchange="renderExpensesTable()"/></div>
+      <div><label class="form-label">الموظف</label><select id="filterEmp" class="form-input" onchange="renderExpensesTable()"><option value="">الكل</option></select></div>
+    </div>
+    <div class="flex gap-2 mt-3">
+      <button class="btn btn-secondary text-sm" onclick="clearExpFilters()">مسح الفلاتر</button>
+      <span id="filteredCount" class="text-sm text-slate-500 self-center mr-auto"></span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="overflow-x-auto">
+      <table class="data-table"><thead><tr><th>#</th><th>التاريخ</th><th>البند</th><th>البيان</th><th>الموظف</th><th>المبلغ (₪)</th><th>إجراء</th></tr></thead>
+      <tbody id="expTableBody"><tr><td colspan="7" class="text-center text-slate-400 py-8">لا توجد مصاريف</td></tr></tbody></table>
+    </div>
+    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end gap-2">
+      <span class="text-sm text-slate-500">الإجمالي:</span>
+      <span id="expFilterTotal" class="text-sm font-bold text-blue-700 num">0 ₪</span>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: EMP STATEMENT -->
+<div id="page-empStatement" class="page">
+  <div class="mb-6"><h1 class="text-2xl font-extrabold text-slate-800">كشف حساب موظف</h1></div>
+  <div class="card mb-5">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+      <div><label class="form-label">اختر الموظف *</label><select id="stmtEmp" class="form-input"><option value="">-- اختر --</option></select></div>
+      <div><label class="form-label">من تاريخ</label><input type="date" id="stmtFrom" class="form-input"/></div>
+      <div><label class="form-label">إلى تاريخ</label><input type="date" id="stmtTo" class="form-input"/></div>
+    </div>
+    <div class="flex gap-3 mt-4">
+      <button class="btn btn-primary" onclick="generateStatement()">عرض الكشف</button>
+      <button class="btn btn-success no-print" onclick="swapPrint('printArea')">🖨️ طباعة</button>
+    </div>
+  </div>
+  <div id="stmtResult" class="hidden">
+    <div id="printArea">
+      <div class="print-only mb-6 text-center border-b-2 border-black pb-4"><h2 style="font-size:20px;font-weight:800;margin:0;">كشف حساب موظف</h2><p id="printStmtSubtitle" style="margin:4px 0;font-size:13px;"></p></div>
+      <div class="card mb-4" id="stmtEmpInfo"></div>
+      <div class="card">
+        <div class="section-title">تفاصيل العمليات</div>
+        <div class="overflow-x-auto">
+          <table class="data-table"><thead><tr><th>#</th><th>التاريخ</th><th>البند</th><th>البيان</th><th>المبلغ (₪)</th></tr></thead>
+          <tbody id="stmtTableBody"></tbody></table>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-200 text-left"><span class="font-bold text-lg">الإجمالي: </span><span id="stmtTotal" class="font-extrabold text-xl text-blue-700 num"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: SOLAR FUND -->
+<div id="page-solarFund" class="page">
+  <div class="mb-6"><h1 class="text-2xl font-extrabold text-slate-800">⛽ صندوق السولار</h1><p class="text-slate-500 text-sm mt-1">إدارة رأس مال صندوق السولار ومتابعة السحوبات والرصيد (سجل تراكمي دائم، لا يُصفّر شهرياً)</p></div>
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+    <div class="stat-card" style="background:linear-gradient(135deg,#065f46,#059669);">
+      <div class="text-emerald-100 text-xs font-semibold uppercase mb-2">إجمالي رأس المال المُودَع</div>
+      <div class="text-3xl font-extrabold num" id="sfTotalCapital">0</div><div class="text-emerald-200 text-sm">شيكل</div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#b45309,#f59e0b);">
+      <div class="text-amber-100 text-xs font-semibold uppercase mb-2">إجمالي المسحوب</div>
+      <div class="text-3xl font-extrabold num" id="sfTotalSpent">0</div><div class="text-amber-200 text-sm">شيكل</div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#1e40af,#3b82f6);" id="sfBalanceCard">
+      <div class="text-blue-100 text-xs font-semibold uppercase mb-2">الرصيد المتبقي</div>
+      <div class="text-3xl font-extrabold num" id="sfBalance">0</div><div class="text-blue-200 text-sm">شيكل</div>
+    </div>
+  </div>
+  <div class="card mb-6">
+    <div class="flex justify-between items-center mb-2"><span class="text-sm font-semibold text-slate-600">نسبة الاستهلاك</span><span class="text-sm font-bold num text-amber-600" id="sfPct">0%</span></div>
+    <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden"><div id="sfProgressBar" class="h-4 rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#10b981,#f59e0b,#ef4444)"></div></div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+    <div class="lg:col-span-2 space-y-5">
+      <div class="card">
+        <div class="section-title" style="color:#059669;">⬆ إيداع رأس مال</div>
+        <div class="space-y-4">
+          <div><label class="form-label">التاريخ *</label><input type="date" id="sfCapDate" class="form-input"/></div>
+          <div><label class="form-label">المبلغ (₪) *</label><input type="number" id="sfCapAmount" class="form-input" placeholder="0.00" min="0" step="0.01" dir="ltr"/></div>
+          <div><label class="form-label">ملاحظة</label><input type="text" id="sfCapNote" class="form-input" placeholder="مثال: تعبئة يناير..."/></div>
+          <button class="btn btn-success w-full" onclick="addSolarCapital()">حفظ الإيداع</button>
+        </div>
+      </div>
+      <div class="card" style="border:2px solid #fef3c7;">
+        <div class="section-title" style="color:#b45309;">⬇ تسجيل سحب سولار</div>
+        <p class="text-xs text-slate-500 mb-4">يُسجَّل كـ "مصروف سولار" ويُخصَم من الصندوق</p>
+        <div class="space-y-4">
+          <div><label class="form-label">التاريخ *</label><input type="date" id="sfWithDate" class="form-input"/></div>
+          <div><label class="form-label">المبلغ (₪) *</label><input type="number" id="sfWithAmount" class="form-input" placeholder="0.00" min="0" step="0.01" dir="ltr"/></div>
+          <div><label class="form-label">المستفيد</label><select id="sfWithEmployee" class="form-input"><option value="">-- اختياري --</option></select></div>
+          <div><label class="form-label">البيان</label><input type="text" id="sfWithDesc" class="form-input" placeholder="مثال: سولار سيارة المندوب..."/></div>
+          <button class="btn btn-warning w-full" onclick="addSolarWithdraw()">تسجيل السحب</button>
+        </div>
+      </div>
+    </div>
+    <div class="lg:col-span-3">
+      <div class="card">
+        <div class="section-title">دفتر حركات صندوق السولار</div>
+        <div class="flex gap-3 mb-4 flex-wrap">
+          <select id="sfFilterMonth" class="form-input" style="width:auto;" onchange="renderSolarLedger()">
+            <option value="">كل الفترات</option>
+            <option value="01">يناير</option><option value="02">فبراير</option><option value="03">مارس</option><option value="04">أبريل</option>
+            <option value="05">مايو</option><option value="06">يونيو</option><option value="07">يوليو</option><option value="08">أغسطس</option>
+            <option value="09">سبتمبر</option><option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+          </select>
+          <input type="number" id="sfFilterYear" class="form-input" style="width:90px;" placeholder="السنة" onchange="renderSolarLedger()"/>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="data-table"><thead><tr><th>#</th><th>التاريخ</th><th>النوع</th><th>البيان</th><th>إيداع (₪)</th><th>سحب (₪)</th><th>الرصيد (₪)</th><th>إجراء</th></tr></thead>
+          <tbody id="sfLedgerBody"><tr><td colspan="8" class="text-center text-slate-400 py-8">لا توجد حركات</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: DELEGATES -->
+<div id="page-delegates" class="page">
+  <div class="mb-6"><h1 class="text-2xl font-extrabold text-slate-800">🚗 المندوبون والبدل اليومي</h1><p class="text-slate-500 text-sm mt-1">تسجيل أيام العمل، ديون المندوبين، والتسوية — يُصفّر تلقائياً كل شهر مع إمكانية الرجوع للأرشيف</p></div>
+
+  <div class="flex gap-2 mb-5 flex-wrap">
+    <button id="dlgTabBtn-register" class="btn btn-primary" onclick="switchDlgTab('register')">📅 تسجيل أيام العمل</button>
+    <button id="dlgTabBtn-debts" class="btn btn-secondary" onclick="switchDlgTab('debts')">💰 ديون المندوبين</button>
+    <button id="dlgTabBtn-statement" class="btn btn-secondary" onclick="switchDlgTab('statement')">📄 كشف حساب مندوب</button>
+    <button id="dlgTabBtn-summary" class="btn btn-secondary" onclick="switchDlgTab('summary')">👥 ملخص جميع المندوبين</button>
+  </div>
+
+  <!-- TAB: REGISTER -->
+  <div id="dlgTab-register">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div class="lg:col-span-2 space-y-5">
+        <div class="card" style="border:2px solid #dbeafe;">
+          <div class="section-title" style="color:#1d4ed8;">📅 تسجيل يوم عمل واحد</div>
+          <div class="space-y-4">
+            <div><label class="form-label">المندوب *</label><select id="dlgEmpSel" class="form-input"><option value="">-- اختر --</option></select></div>
+            <div><label class="form-label">التاريخ *</label><input type="date" id="dlgDate" class="form-input"/></div>
+            <div><label class="form-label">البدل اليومي (₪) *</label><input type="number" id="dlgRate" class="form-input" value="100" min="0" step="0.5" dir="ltr"/></div>
+            <div><label class="form-label">ملاحظة</label><input type="text" id="dlgNote" class="form-input" placeholder="اختياري..."/></div>
+            <button class="btn btn-primary w-full" onclick="addWorkDay()">حفظ يوم العمل</button>
+          </div>
+        </div>
+        <div class="card" style="border:2px solid #dcfce7;">
+          <div class="section-title" style="color:#15803d;">📆 تسجيل أيام متعددة</div>
+          <p class="text-xs text-slate-500 mb-4">سجّل فترة كاملة دفعة واحدة مع تحديد أيام العمل في الأسبوع</p>
+          <div class="space-y-3">
+            <div><label class="form-label">المندوب *</label><select id="dlgBulkEmp" class="form-input"><option value="">-- اختر --</option></select></div>
+            <div class="grid grid-cols-2 gap-2">
+              <div><label class="form-label">من تاريخ</label><input type="date" id="dlgBulkFrom" class="form-input" oninput="calcBulkPreview()"/></div>
+              <div><label class="form-label">إلى تاريخ</label><input type="date" id="dlgBulkTo" class="form-input" oninput="calcBulkPreview()"/></div>
+            </div>
+            <div><label class="form-label">البدل اليومي (₪)</label><input type="number" id="dlgBulkRate" class="form-input" value="100" min="0" step="0.5" dir="ltr" oninput="calcBulkPreview()"/></div>
+            <div>
+              <label class="form-label">أيام العمل في الأسبوع</label>
+              <div class="flex flex-wrap gap-2 mt-1">
+                <label class="flex items-center gap-1 text-sm cursor-pointer"><input type="checkbox" value="0" checked class="dlg-weekday" onchange="calcBulkPreview()"> الأحد</label>
+                <label class="flex items-center gap-1 text-sm cursor-pointer"><input type="checkbox" value="1" checked class="dlg-weekday" onchange="calcBulkPreview()"> الاثنين</label>
+                <label class="flex items-center gap-1 text-sm cursor-pointer"><input type="checkbox" value="2" checked class="dlg-weekday" onchange="calcBulkPreview()"> الثلاثاء</label>
+                <label class="flex items-center gap-1 text-sm cursor-pointer"><input type="checkbox" value="3" checked class="dlg-weekday" onchange="calcBulkPreview()"> الأربعاء</label>
+                <label class="flex items-center gap-1 text-sm cursor-pointer"><input type="checkbox" value="4" checked class="dlg-weekday" onchange="calcBulkPreview()"> الخميس</label>
+                <label class="flex items-center gap-1 text-sm cursor-pointer"><input type="checkbox" value="5" class="dlg-weekday" onchange="calcBulkPreview()"> الجمعة</label>
+                <label class="flex items-center gap-1 text-sm cursor-pointer"><input type="checkbox" value="6" class="dlg-weekday" onchange="calcBulkPreview()"> السبت</label>
+              </div>
+            </div>
+            <div id="bulkPreview" class="hidden text-sm font-bold text-emerald-700 bg-emerald-50 rounded-lg p-3"></div>
+            <button class="btn btn-success w-full" onclick="addBulkWorkDays()">تسجيل الأيام المتعددة</button>
+          </div>
+        </div>
+      </div>
+      <div class="lg:col-span-3">
+        <div class="card">
+          <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div class="section-title mb-0">سجل أيام العمل (الشهر الحالي)</div>
+            <div class="flex gap-2 flex-wrap">
+              <select id="dlgLogEmpFilter" class="form-input text-sm" style="width:auto;" onchange="renderWorkDaysLog()"><option value="">كل المندوبين</option></select>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="data-table"><thead><tr><th>#</th><th>التاريخ</th><th>اليوم</th><th>المندوب</th><th>البدل (₪)</th><th>ملاحظة</th><th>إجراء</th></tr></thead>
+            <tbody id="dlgLogBody"><tr><td colspan="7" class="text-center text-slate-400 py-8">لا توجد أيام مسجلة</td></tr></tbody></table>
+          </div>
+          <div class="mt-3 pt-3 border-t border-slate-100 flex justify-between text-sm">
+            <span id="dlgLogCount" class="text-slate-500"></span>
+            <span>الإجمالي: <strong class="num text-blue-700" id="dlgLogTotal">0 ₪</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: DEBTS -->
+  <div id="dlgTab-debts" class="hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div class="lg:col-span-2">
+        <div class="card" style="border:2px solid #fee2e2;">
+          <div class="section-title" style="color:#dc2626;">💰 تسجيل دين للمندوب من الشركة</div>
+          <p class="text-xs text-slate-500 mb-4">مثال: أخذ المندوب سلفة أو بضاعة تُخصم لاحقاً من بدله اليومي</p>
+          <div class="space-y-4">
+            <div><label class="form-label">المندوب *</label><select id="dlgDebtEmp" class="form-input"><option value="">-- اختر --</option></select></div>
+            <div><label class="form-label">التاريخ *</label><input type="date" id="dlgDebtDate" class="form-input"/></div>
+            <div><label class="form-label">نوع الدين</label>
+              <select id="dlgDebtType" class="form-input">
+                <option value="سلفة نقدية">💵 سلفة نقدية</option>
+                <option value="بضاعة">📦 بضاعة / مواد</option>
+                <option value="مصروف شخصي">🧾 مصروف شخصي</option>
+                <option value="غرامة">⚠️ غرامة / خصم</option>
+                <option value="أخرى">📋 أخرى</option>
+              </select>
+            </div>
+            <div><label class="form-label">المبلغ (₪) *</label><input type="number" id="dlgDebtAmount" class="form-input" placeholder="0.00" min="0" step="0.01" dir="ltr"/></div>
+            <div><label class="form-label">البيان</label><textarea id="dlgDebtNote" class="form-input" rows="2" placeholder="وصف الدين..."></textarea></div>
+            <button class="btn btn-danger w-full" onclick="addDelegateDebt()">تسجيل الدين</button>
+          </div>
+        </div>
+      </div>
+      <div class="lg:col-span-3">
+        <div class="card">
+          <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div class="section-title mb-0">سجل ديون المندوبين (الشهر الحالي)</div>
+            <select id="dlgDebtFilter" class="form-input text-sm" style="width:auto;" onchange="renderDebtsLog()"><option value="">كل المندوبين</option></select>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="data-table"><thead><tr><th>#</th><th>التاريخ</th><th>المندوب</th><th>النوع</th><th>البيان</th><th>المبلغ (₪)</th><th>إجراء</th></tr></thead>
+            <tbody id="dlgDebtBody"><tr><td colspan="7" class="text-center text-slate-400 py-8">لا توجد ديون</td></tr></tbody></table>
+          </div>
+          <div class="mt-3 pt-3 border-t border-slate-100 flex justify-between text-sm">
+            <span class="text-slate-500">إجمالي الديون:</span>
+            <strong class="num text-red-600" id="dlgDebtTotal">0 ₪</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: STATEMENT -->
+  <div id="dlgTab-statement" class="hidden">
+    <div class="card mb-5">
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+        <div><label class="form-label">المندوب *</label><select id="dlgStmtEmp" class="form-input"><option value="">-- اختر --</option></select></div>
+        <div><label class="form-label">من تاريخ</label><input type="date" id="dlgStmtFrom" class="form-input"/></div>
+        <div><label class="form-label">إلى تاريخ</label><input type="date" id="dlgStmtTo" class="form-input"/></div>
+        <div class="flex gap-2">
+          <button class="btn btn-primary flex-1" onclick="generateDlgStatement()">عرض الكشف</button>
+          <button class="btn btn-success no-print" onclick="swapPrint('printAreaDlgStmt')">🖨️</button>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400 mt-3">💡 هذا الكشف يجمع بيانات الشهر الحالي + الأرشيف تلقائياً حسب الفترة المحددة</p>
+    </div>
+    <div id="dlgStmtResult" class="hidden">
+      <div id="printAreaDlgStmt">
+        <div class="print-only mb-6 text-center border-b-2 border-black pb-4"><h2 style="font-size:20px;font-weight:800;margin:0;">كشف حساب مندوب — البدل اليومي</h2><p id="printDlgStmtSub" style="margin:4px 0;font-size:13px;"></p></div>
+        <div class="card mb-4" id="dlgStmtHeader"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-5" id="dlgStmtStats"></div>
+        <div class="card mb-4">
+          <div class="section-title">تفاصيل أيام العمل</div>
+          <div class="overflow-x-auto">
+            <table class="data-table"><thead><tr><th>#</th><th>التاريخ</th><th>اليوم</th><th>البدل (₪)</th><th>ملاحظة</th></tr></thead>
+            <tbody id="dlgStmtDaysBody"></tbody><tfoot id="dlgStmtDaysFoot" style="font-weight:800;background:#f8fafc;"></tfoot></table>
+          </div>
+        </div>
+        <div class="card mb-4">
+          <div class="section-title" style="color:#dc2626;">الديون المأخوذة من الشركة (مخصومة من البدل)</div>
+          <div class="overflow-x-auto">
+            <table class="data-table"><thead><tr><th>#</th><th>التاريخ</th><th>النوع</th><th>البيان</th><th>المبلغ (₪)</th></tr></thead>
+            <tbody id="dlgStmtDebtsBody"></tbody><tfoot id="dlgStmtDebtsFoot" style="font-weight:800;background:#fff7f7;"></tfoot></table>
+          </div>
+        </div>
+        <div class="card" style="border:2px solid #2638f0;" id="dlgStmtSettlement"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: SUMMARY -->
+  <div id="dlgTab-summary" class="hidden">
+    <div class="card mb-5">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+        <div><label class="form-label">من تاريخ</label><input type="date" id="dlgSumFrom" class="form-input"/></div>
+        <div><label class="form-label">إلى تاريخ</label><input type="date" id="dlgSumTo" class="form-input"/></div>
+        <div class="flex gap-2">
+          <button class="btn btn-primary flex-1" onclick="generateDlgSummary()">عرض الملخص</button>
+          <button class="btn btn-success no-print" onclick="swapPrint('printAreaDlgSum')">🖨️ طباعة</button>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400 mt-3">💡 يجمع بيانات الشهر الحالي + الأرشيف تلقائياً — مناسب للتسوية السنوية</p>
+    </div>
+    <div id="dlgSumResult" class="hidden">
+      <div id="printAreaDlgSum">
+        <div class="print-only mb-6 text-center border-b-2 border-black pb-4"><h2 style="font-size:20px;font-weight:800;margin:0;">ملخص بدل جميع المندوبين</h2><p id="printDlgSumSub" style="margin:4px 0;font-size:13px;"></p></div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5" id="dlgSumCards"></div>
+        <div class="card">
+          <div class="section-title">جدول ملخص المندوبين</div>
+          <div class="overflow-x-auto">
+            <table class="data-table"><thead><tr><th>#</th><th>المندوب</th><th>أيام العمل</th><th>إجمالي البدل (₪)</th><th>إجمالي الديون (₪)</th><th>الصافي المستحق (₪)</th></tr></thead>
+            <tbody id="dlgSumBody"></tbody><tfoot id="dlgSumFoot" style="font-weight:800;background:#f8fafc;"></tfoot></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: REPORTS -->
+<div id="page-reports" class="page">
+  <div class="mb-6"><h1 class="text-2xl font-extrabold text-slate-800">📊 التقارير المتقدمة</h1><p class="text-slate-500 text-sm mt-1">تقارير تفصيلية شهرية، كشف مصاريف الموظفين، وملخص السلف والمصاريف</p></div>
+  <div class="flex gap-2 mb-5 flex-wrap">
+    <button id="tabBtn-monthly" class="btn btn-primary" onclick="switchRepTab('monthly')">📅 التقرير الشهري</button>
+    <button id="tabBtn-employee" class="btn btn-secondary" onclick="switchRepTab('employee')">👤 مصاريف موظف تفصيلي</button>
+    <button id="tabBtn-empSummary" class="btn btn-secondary" onclick="switchRepTab('empSummary')">👥 ملخص جميع الموظفين</button>
+  </div>
+
+  <div id="repTab-monthly">
+    <div class="card mb-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <div><label class="form-label">الشهر</label>
+          <select id="repMonth" class="form-input">
+            <option value="1">يناير</option><option value="2">فبراير</option><option value="3">مارس</option><option value="4">أبريل</option>
+            <option value="5">مايو</option><option value="6">يونيو</option><option value="7">يوليو</option><option value="8">أغسطس</option>
+            <option value="9">سبتمبر</option><option value="10">أكتوبر</option><option value="11">نوفمبر</option><option value="12">ديسمبر</option>
+          </select>
+        </div>
+        <div><label class="form-label">السنة</label><input type="number" id="repYear" class="form-input" min="2020" max="2099"/></div>
+        <div><label class="form-label">فلتر الموظف</label><select id="repEmpFilter" class="form-input"><option value="">الكل</option></select></div>
+        <div><label class="form-label">فلتر البند</label>
+          <select id="repCatFilter" class="form-input">
+            <option value="">الكل</option><option value="سلف موظفين">سلف موظفين</option><option value="صندوق سولار">صندوق سولار</option>
+            <option value="مصروف سولار">مصروف سولار</option><option value="مصروفات مكتبية">مصروفات مكتبية</option>
+            <option value="صيانة سيارات">صيانة سيارات</option><option value="اتصالات">اتصالات</option><option value="مصاريف أخرى">مصاريف أخرى</option>
+          </select>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400 mt-3">💡 يبحث تلقائياً في الشهر الحالي أو الأرشيف حسب الشهر/السنة المختارة</p>
+      <div class="flex gap-2 mt-2">
+        <button class="btn btn-primary" onclick="generateReport()">توليد التقرير</button>
+        <button class="btn btn-success no-print" onclick="swapPrint('printArea2')">🖨️ طباعة</button>
+      </div>
+    </div>
+    <div id="reportResult" class="hidden">
+      <div id="printArea2">
+        <div class="print-only mb-6 text-center border-b-2 border-black pb-4"><h2 style="font-size:22px;font-weight:800;margin:0;">التقرير الشهري لمصاريف الشركة</h2><p id="printRepSubtitle" style="margin:4px 0;font-size:14px;"></p></div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5" id="repMiniStats"></div>
+        <div class="card mb-5">
+          <div class="section-title">ملخص البنود</div>
+          <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>بند المصروف</th><th>عدد العمليات</th><th>الإجمالي (₪)</th><th>النسبة</th></tr></thead>
+          <tbody id="repSummaryBody"></tbody><tfoot id="repSummaryFoot" style="font-weight:800;background:#f8fafc;"></tfoot></table></div>
+        </div>
+        <div class="card">
+          <div class="section-title">التفاصيل الكاملة</div>
+          <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>#</th><th>التاريخ</th><th>البند</th><th>الموظف</th><th>البيان</th><th>المبلغ (₪)</th></tr></thead>
+          <tbody id="repDetailBody"></tbody></table></div>
+          <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between"><span id="repRowCount" class="text-sm text-slate-500"></span><div><span class="font-bold">الإجمالي: </span><span id="repGrandTotal" class="font-extrabold text-xl text-blue-700 num"></span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="repTab-employee" class="hidden">
+    <div class="card mb-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <div><label class="form-label">اختر الموظف *</label><select id="repEmpSelect" class="form-input"><option value="">-- اختر --</option></select></div>
+        <div><label class="form-label">من تاريخ</label><input type="date" id="repEmpFrom" class="form-input"/></div>
+        <div><label class="form-label">إلى تاريخ</label><input type="date" id="repEmpTo" class="form-input"/></div>
+        <div><label class="form-label">فلتر البند</label>
+          <select id="repEmpCat" class="form-input">
+            <option value="">الكل</option><option value="سلف موظفين">سلف موظفين فقط</option><option value="مصروف سولار">مصروف سولار</option>
+            <option value="مصروفات مكتبية">مصروفات مكتبية</option><option value="صيانة سيارات">صيانة سيارات</option>
+            <option value="اتصالات">اتصالات</option><option value="مصاريف أخرى">مصاريف أخرى</option>
+          </select>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400 mt-3">💡 يجمع بيانات الشهر الحالي + الأرشيف حسب الفترة المحددة</p>
+      <div class="flex gap-2 mt-2">
+        <button class="btn btn-primary" onclick="generateEmpDetailReport()">عرض التقرير</button>
+        <button class="btn btn-success no-print" onclick="swapPrint('printAreaEmpDetail')">🖨️ طباعة</button>
+      </div>
+    </div>
+    <div id="empDetailResult" class="hidden">
+      <div id="printAreaEmpDetail">
+        <div class="print-only mb-6 text-center border-b-2 border-black pb-4"><h2 style="font-size:20px;font-weight:800;margin:0;">تقرير مصاريف موظف تفصيلي</h2><p id="printEmpDetailSub" style="margin:4px 0;font-size:13px;"></p></div>
+        <div class="card mb-4" id="empDetailInfoCard"></div>
+        <div class="card mb-4"><div class="section-title">ملخص حسب البند</div>
+          <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>البند</th><th>عدد العمليات</th><th>الإجمالي (₪)</th></tr></thead>
+          <tbody id="empDetailCatBody"></tbody><tfoot id="empDetailCatFoot" style="font-weight:800;background:#f8fafc;"></tfoot></table></div>
+        </div>
+        <div class="card"><div class="section-title">تفاصيل جميع الحركات</div>
+          <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>#</th><th>التاريخ</th><th>البند</th><th>البيان</th><th>المبلغ (₪)</th></tr></thead>
+          <tbody id="empDetailTxBody"></tbody></table></div>
+          <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between"><span id="empDetailCount" class="text-sm text-slate-500"></span><div><span class="font-bold">الإجمالي: </span><span id="empDetailTotal" class="font-extrabold text-xl text-blue-700 num"></span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="repTab-empSummary" class="hidden">
+    <div class="card mb-5">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+        <div><label class="form-label">من تاريخ</label><input type="date" id="repSumFrom" class="form-input"/></div>
+        <div><label class="form-label">إلى تاريخ</label><input type="date" id="repSumTo" class="form-input"/></div>
+        <div class="flex gap-2">
+          <button class="btn btn-primary flex-1" onclick="generateEmpSummary()">عرض الملخص</button>
+          <button class="btn btn-success no-print" onclick="swapPrint('printAreaEmpSummary')">🖨️ طباعة</button>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400 mt-3">💡 يجمع بيانات الشهر الحالي + الأرشيف حسب الفترة المحددة</p>
+    </div>
+    <div id="empSummaryResult" class="hidden">
+      <div id="printAreaEmpSummary">
+        <div class="print-only mb-6 text-center border-b-2 border-black pb-4"><h2 style="font-size:20px;font-weight:800;margin:0;">ملخص سلف ومصاريف جميع الموظفين</h2><p id="printEmpSumSub" style="margin:4px 0;font-size:13px;"></p></div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5" id="empSumGrandCards"></div>
+        <div class="card mb-5"><div class="section-title">مجموع سلف ومصاريف كل موظف</div>
+          <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>#</th><th>الموظف</th><th>مجموع السلف (₪)</th><th>مجموع المصاريف الأخرى (₪)</th><th>الإجمالي الكلي (₪)</th><th>عدد العمليات</th></tr></thead>
+          <tbody id="empSumBody"></tbody><tfoot id="empSumFoot" style="font-weight:800;background:#f8fafc;"></tfoot></table></div>
+        </div>
+        <div id="empSumCards"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- PAGE: VACATIONS -->
+<div id="page-vacations" class="page">
+  <div class="mb-6">
+    <h1 class="text-2xl font-extrabold text-slate-800">🏖️ عطل الموظفين</h1>
+    <p class="text-slate-500 text-sm mt-1">تسجيل العطل والإجازات — حساب الرصيد المتبقي والمستهلك لكل موظف</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex gap-2 mb-5 flex-wrap">
+    <button id="vacTabBtn-register" class="btn btn-primary" onclick="switchVacTab('register')">➕ تسجيل عطلة</button>
+    <button id="vacTabBtn-balance"  class="btn btn-secondary" onclick="switchVacTab('balance')">📊 رصيد العطل</button>
+    <button id="vacTabBtn-summary"  class="btn btn-secondary" onclick="switchVacTab('summary')">👥 ملخص جميع الموظفين</button>
+    <button id="vacTabBtn-settings" class="btn btn-secondary" onclick="switchVacTab('settings')">⚙️ إعدادات الاستحقاق</button>
+  </div>
+
+  <!-- TAB: REGISTER -->
+  <div id="vacTab-register">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+      <!-- Form -->
+      <div class="lg:col-span-2 space-y-5">
+        <div class="card" style="border:2px solid #dbeafe;">
+          <div class="section-title" style="color:#1d4ed8;">📅 تسجيل عطلة / إجازة</div>
+          <div class="space-y-4">
+            <div>
+              <label class="form-label">الموظف *</label>
+              <select id="vacEmpSel" class="form-input" onchange="fillDefaultVacRate()">
+                <option value="">-- اختر الموظف --</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">نوع الإجازة *</label>
+              <select id="vacType" class="form-input">
+                <option value="سنوية">🏖️ إجازة سنوية</option>
+                <option value="مرضية">🏥 إجازة مرضية</option>
+                <option value="طارئة">⚡ إجازة طارئة</option>
+                <option value="بدون راتب">💸 إجازة بدون راتب</option>
+                <option value="أمومة">👶 إجازة أمومة</option>
+                <option value="أخرى">📋 أخرى</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">تاريخ البداية *</label>
+                <input type="date" id="vacFrom" class="form-input" oninput="calcVacDays()"/>
+              </div>
+              <div>
+                <label class="form-label">تاريخ النهاية *</label>
+                <input type="date" id="vacTo" class="form-input" oninput="calcVacDays()"/>
+              </div>
+            </div>
+            <!-- Live days preview -->
+            <div id="vacDaysPreview" class="hidden rounded-xl p-3 text-sm font-bold" style="background:#eff6ff;color:#1d4ed8;border:1.5px solid #bfdbfe;"></div>
+            <div>
+              <label class="form-label">ملاحظات</label>
+              <textarea id="vacNote" class="form-input" rows="2" placeholder="سبب الإجازة، تفاصيل..."></textarea>
+            </div>
+            <button class="btn btn-primary w-full" onclick="addVacation()">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              حفظ الإجازة
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Stats for selected employee -->
+        <div class="card" id="vacEmpQuickStats" style="display:none;">
+          <div class="section-title" style="font-size:15px;">رصيد الموظف المختار</div>
+          <div id="vacEmpQuickStatsBody"></div>
+        </div>
+      </div>
+
+      <!-- Log table -->
+      <div class="lg:col-span-3">
+        <div class="card">
+          <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div class="section-title mb-0">سجل الإجازات</div>
+            <div class="flex gap-2 flex-wrap">
+              <select id="vacLogEmpFilter" class="form-input text-sm" style="width:auto;" onchange="renderVacationsLog()">
+                <option value="">كل الموظفين</option>
+              </select>
+              <select id="vacLogTypeFilter" class="form-input text-sm" style="width:auto;" onchange="renderVacationsLog()">
+                <option value="">كل الأنواع</option>
+                <option value="سنوية">سنوية</option>
+                <option value="مرضية">مرضية</option>
+                <option value="طارئة">طارئة</option>
+                <option value="بدون راتب">بدون راتب</option>
+                <option value="أمومة">أمومة</option>
+                <option value="أخرى">أخرى</option>
+              </select>
+              <input type="number" id="vacLogYear" class="form-input text-sm" style="width:80px;" placeholder="السنة" onchange="renderVacationsLog()"/>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>الموظف</th><th>النوع</th><th>من</th><th>إلى</th>
+                  <th>الأيام</th><th>ملاحظات</th><th>إجراء</th>
+                </tr>
+              </thead>
+              <tbody id="vacLogBody">
+                <tr><td colspan="8" class="text-center text-slate-400 py-8">لا توجد إجازات مسجلة</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-3 pt-3 border-t border-slate-100 flex justify-between text-sm">
+            <span id="vacLogCount" class="text-slate-500"></span>
+            <span>إجمالي الأيام: <strong class="num text-blue-700" id="vacLogTotal">0</strong></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /vacTab-register -->
+
+  <!-- TAB: BALANCE -->
+  <div id="vacTab-balance" class="hidden">
+    <div class="card mb-5">
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+        <div>
+          <label class="form-label">الموظف *</label>
+          <select id="vacBalEmp" class="form-input"><option value="">-- اختر الموظف --</option></select>
+        </div>
+        <div>
+          <label class="form-label">السنة</label>
+          <input type="number" id="vacBalYear" class="form-input" placeholder="مثال: 2025"/>
+        </div>
+        <div class="sm:col-span-2 flex gap-2 items-end">
+          <button class="btn btn-primary flex-1" onclick="generateVacBalance()">عرض الرصيد</button>
+          <button class="btn btn-success no-print" onclick="swapPrint('printAreaVacBal')">🖨️ طباعة</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="vacBalResult" class="hidden">
+      <div id="printAreaVacBal">
+        <div class="print-only mb-6 text-center border-b-2 border-black pb-4">
+          <h2 style="font-size:20px;font-weight:800;margin:0;">كشف رصيد إجازات موظف</h2>
+          <p id="printVacBalSub" style="margin:4px 0;font-size:13px;"></p>
+        </div>
+
+        <!-- Employee header -->
+        <div class="card mb-4" id="vacBalHeader"></div>
+
+        <!-- Balance gauge cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-5" id="vacBalCards"></div>
+
+        <!-- Progress bar -->
+        <div class="card mb-5" id="vacBalProgress"></div>
+
+        <!-- By type breakdown -->
+        <div class="card mb-5">
+          <div class="section-title">ملخص حسب نوع الإجازة</div>
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead><tr><th>نوع الإجازة</th><th>عدد المرات</th><th>إجمالي الأيام</th></tr></thead>
+              <tbody id="vacBalTypeBody"></tbody>
+              <tfoot id="vacBalTypeFoot" style="font-weight:800;background:#f8fafc;"></tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Full history for this employee + year -->
+        <div class="card">
+          <div class="section-title">تفاصيل جميع الإجازات</div>
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead><tr><th>#</th><th>النوع</th><th>من</th><th>إلى</th><th>الأيام</th><th>ملاحظات</th></tr></thead>
+              <tbody id="vacBalDetailBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /vacTab-balance -->
+
+  <!-- TAB: SUMMARY ALL EMPLOYEES -->
+  <div id="vacTab-summary" class="hidden">
+    <div class="card mb-5">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+        <div>
+          <label class="form-label">السنة</label>
+          <input type="number" id="vacSumYear" class="form-input" placeholder="اتركه فارغاً = كل السنوات"/>
+        </div>
+        <div>
+          <label class="form-label">نوع الإجازة</label>
+          <select id="vacSumType" class="form-input">
+            <option value="">الكل</option>
+            <option value="سنوية">سنوية</option>
+            <option value="مرضية">مرضية</option>
+            <option value="طارئة">طارئة</option>
+            <option value="بدون راتب">بدون راتب</option>
+            <option value="أمومة">أمومة</option>
+            <option value="أخرى">أخرى</option>
+          </select>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-primary flex-1" onclick="generateVacSummary()">عرض الملخص</button>
+          <button class="btn btn-success no-print" onclick="swapPrint('printAreaVacSum')">🖨️ طباعة</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="vacSumResult" class="hidden">
+      <div id="printAreaVacSum">
+        <div class="print-only mb-6 text-center border-b-2 border-black pb-4">
+          <h2 style="font-size:20px;font-weight:800;margin:0;">ملخص إجازات جميع الموظفين</h2>
+          <p id="printVacSumSub" style="margin:4px 0;font-size:13px;"></p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5" id="vacSumCards"></div>
+
+        <div class="card">
+          <div class="section-title">جدول إجازات جميع الموظفين</div>
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>الموظف</th>
+                  <th>سنوية</th><th>مرضية</th><th>طارئة</th><th>بدون راتب</th><th>أخرى</th>
+                  <th>إجمالي الأيام</th><th>الرصيد المتبقي (سنوي)</th>
+                </tr>
+              </thead>
+              <tbody id="vacSumBody"></tbody>
+              <tfoot id="vacSumFoot" style="font-weight:800;background:#f8fafc;"></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /vacTab-summary -->
+
+  <!-- TAB: SETTINGS -->
+  <div id="vacTab-settings" class="hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- Global defaults -->
+      <div class="card">
+        <div class="section-title">⚙️ إعدادات الاستحقاق الافتراضية</div>
+        <p class="text-sm text-slate-500 mb-5">هذه الإعدادات تُطبَّق على جميع الموظفين ما لم تُحدد إعدادات خاصة</p>
+        <div class="space-y-4">
+          <div>
+            <label class="form-label">رصيد الإجازة السنوية (أيام/سنة)</label>
+            <input type="number" id="setAnnualDays" class="form-input" min="0" max="365" dir="ltr"/>
+          </div>
+          <div>
+            <label class="form-label">رصيد الإجازة المرضية (أيام/سنة)</label>
+            <input type="number" id="setSickDays" class="form-input" min="0" max="365" dir="ltr"/>
+          </div>
+          <div>
+            <label class="form-label">رصيد الإجازة الطارئة (أيام/سنة)</label>
+            <input type="number" id="setEmergencyDays" class="form-input" min="0" max="365" dir="ltr"/>
+          </div>
+          <div class="flex items-center gap-3 pt-2">
+            <input type="checkbox" id="setExcludeWeekends" class="w-4 h-4"/>
+            <label for="setExcludeWeekends" class="text-sm font-semibold text-slate-600">استثناء عطلة نهاية الأسبوع (الجمعة والسبت) من حساب الأيام</label>
+          </div>
+          <div class="flex items-center gap-3">
+            <input type="checkbox" id="setCarryOver" class="w-4 h-4"/>
+            <label for="setCarryOver" class="text-sm font-semibold text-slate-600">السماح بترحيل الرصيد غير المستخدم للسنة التالية</label>
+          </div>
+          <button class="btn btn-primary w-full" onclick="saveVacSettings()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            حفظ الإعدادات
+          </button>
+        </div>
+      </div>
+
+      <!-- Per-employee overrides -->
+      <div class="card">
+        <div class="section-title">👤 إعدادات خاصة لموظف</div>
+        <p class="text-sm text-slate-500 mb-4">تجاوز الإعدادات الافتراضية لموظف بعينه (مثلاً موظف قديم له 21 يوم سنوي)</p>
+        <div class="space-y-4">
+          <div>
+            <label class="form-label">الموظف</label>
+            <select id="setEmpOverride" class="form-input" onchange="loadEmpVacOverride()">
+              <option value="">-- اختر الموظف --</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">رصيد سنوي خاص (أيام/سنة) — اتركه فارغاً للافتراضي</label>
+            <input type="number" id="setOverrideAnnual" class="form-input" min="0" max="365" placeholder="مثال: 21" dir="ltr"/>
+          </div>
+          <div>
+            <label class="form-label">رصيد مرضي خاص (أيام/سنة)</label>
+            <input type="number" id="setOverrideSick" class="form-input" min="0" max="365" placeholder="مثال: 10" dir="ltr"/>
+          </div>
+          <div>
+            <label class="form-label">رصيد طارئة خاص (أيام/سنة)</label>
+            <input type="number" id="setOverrideEmergency" class="form-input" min="0" max="365" placeholder="مثال: 3" dir="ltr"/>
+          </div>
+          <div>
+            <label class="form-label">تاريخ التعيين (لحساب السنوات)</label>
+            <input type="date" id="setOverrideHireDate" class="form-input"/>
+          </div>
+          <button class="btn btn-success w-full" onclick="saveEmpVacOverride()">حفظ الإعدادات الخاصة</button>
+        </div>
+
+        <!-- Existing overrides list -->
+        <div class="mt-5 pt-4 border-t border-slate-100">
+          <div class="text-sm font-bold text-slate-600 mb-3">الإعدادات الخاصة الحالية:</div>
+          <div id="overridesList" class="space-y-2 text-sm text-slate-500">لا توجد إعدادات خاصة</div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /vacTab-settings -->
+
+</div><!-- /page-vacations -->
+
+<!-- PAGE: ARCHIVES -->
+<div id="page-archives" class="page">
+  <div class="mb-6"><h1 class="text-2xl font-extrabold text-slate-800">🗄️ أرشيف الأشهر السابقة</h1><p class="text-slate-500 text-sm mt-1">عرض بيانات أي شهر سابق تم إقفاله — جميع البيانات محفوظة بشكل دائم</p></div>
+
+  <div class="card mb-5" style="border:2px solid #fde68a;background:#fffbeb;">
+    <div class="flex items-center gap-3">
+      <svg width="22" height="22" fill="none" stroke="#b45309" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div class="text-sm text-amber-800">
+        <strong>كيف يعمل الأرشيف؟</strong> في بداية كل شهر جديد يقوم النظام تلقائياً بأرشفة بيانات الشهر المنتهي (المصاريف، السلف، أيام عمل المندوبين، وديونهم) ثم يبدأ الشهر الجديد بصفر. صندوق السولار يبقى تراكمياً ولا يُصفّر. يمكنك دائماً العودة لمراجعة أو طباعة أي شهر سابق من هنا.
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-5">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+      <div>
+        <label class="form-label">اختر الشهر المؤرشف</label>
+        <select id="archiveSelect" class="form-input" onchange="loadArchiveView()">
+          <option value="">-- اختر شهراً --</option>
+        </select>
+      </div>
+      <div class="sm:col-span-2 flex items-end">
+        <button class="btn btn-secondary" onclick="archiveNowManually()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+          أرشفة الشهر الحالي الآن يدوياً
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="archiveResult" class="hidden">
+    <div class="archive-banner">
+      <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+      <span id="archiveBannerText"></span>
+      <button class="btn btn-success no-print mr-auto" style="padding:6px 14px;" onclick="swapPrint('printAreaArchive')">🖨️ طباعة هذا الأرشيف</button>
+    </div>
+    <div id="printAreaArchive">
+      <div class="print-only mb-6 text-center border-b-2 border-black pb-4"><h2 style="font-size:20px;font-weight:800;margin:0;">أرشيف الشهر</h2><p id="printArchiveSub" style="margin:4px 0;font-size:13px;"></p></div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5" id="archStatCards"></div>
+
+      <div class="card mb-5">
+        <div class="section-title">ملخص بنود المصاريف</div>
+        <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>البند</th><th>عدد العمليات</th><th>الإجمالي (₪)</th></tr></thead>
+        <tbody id="archCatBody"></tbody><tfoot id="archCatFoot" style="font-weight:800;background:#f8fafc;"></tfoot></table></div>
+      </div>
+
+      <div class="card mb-5">
+        <div class="section-title">تفاصيل المصاريف</div>
+        <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>#</th><th>التاريخ</th><th>البند</th><th>الموظف</th><th>البيان</th><th>المبلغ (₪)</th></tr></thead>
+        <tbody id="archExpBody"></tbody></table></div>
+      </div>
+
+      <div class="card mb-5">
+        <div class="section-title">أيام عمل المندوبين</div>
+        <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>#</th><th>التاريخ</th><th>المندوب</th><th>البدل (₪)</th><th>ملاحظة</th></tr></thead>
+        <tbody id="archWorkBody"></tbody><tfoot id="archWorkFoot" style="font-weight:800;background:#f8fafc;"></tfoot></table></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="color:#dc2626;">ديون المندوبين</div>
+        <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>#</th><th>التاريخ</th><th>المندوب</th><th>النوع</th><th>البيان</th><th>المبلغ (₪)</th></tr></thead>
+        <tbody id="archDebtBody"></tbody><tfoot id="archDebtFoot" style="font-weight:800;background:#fff7f7;"></tfoot></table></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="noArchiveMsg" class="card text-center text-slate-400 py-10">
+    لا توجد أشهر مؤرشفة بعد. سيتم إنشاء أرشيف تلقائياً عند بداية كل شهر جديد.
+  </div>
+</div>
+
+</main>
+
+<!-- EDIT MODAL -->
+<div id="editModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="flex items-center justify-between mb-5"><h3 class="font-extrabold text-lg">تعديل المصروف</h3><button onclick="closeModal('editModal')" class="text-slate-400 hover:text-slate-600"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <input type="hidden" id="editId"/>
+    <div class="space-y-4">
+      <div><label class="form-label">التاريخ *</label><input type="date" id="editDate" class="form-input"/></div>
+      <div><label class="form-label">بند المصروف *</label>
+        <select id="editCategory" class="form-input">
+          <option value="سلف موظفين">سلف موظفين</option><option value="صندوق سولار">صندوق سولار</option>
+          <option value="مصروف سولار">مصروف سولار</option><option value="مصروفات مكتبية">مصروفات مكتبية</option>
+          <option value="صيانة سيارات">صيانة سيارات</option><option value="اتصالات">اتصالات</option><option value="مصاريف أخرى">مصاريف أخرى</option>
+        </select>
+      </div>
+      <div><label class="form-label">المبلغ (₪) *</label><input type="number" id="editAmount" class="form-input" min="0" step="0.01" dir="ltr"/></div>
+      <div><label class="form-label">الموظف</label><select id="editEmployee" class="form-input"><option value="">-- لا يوجد --</option></select></div>
+      <div><label class="form-label">البيان</label><textarea id="editDesc" class="form-input" rows="2"></textarea></div>
+    </div>
+    <div class="flex gap-3 mt-5"><button class="btn btn-primary flex-1" onclick="saveEdit()">حفظ التعديل</button><button class="btn btn-secondary" onclick="closeModal('editModal')">إلغاء</button></div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div id="deleteModal" class="modal-overlay">
+  <div class="modal-box" style="max-width:380px;">
+    <div class="text-center">
+      <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><svg width="28" height="28" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></div>
+      <h3 class="font-extrabold text-lg mb-2">تأكيد الحذف</h3>
+      <p class="text-slate-500 text-sm mb-5">هل أنت متأكد؟ لا يمكن التراجع.</p>
+      <div class="flex gap-3"><button class="btn btn-danger flex-1" onclick="confirmDelete()">نعم، احذف</button><button class="btn btn-secondary flex-1" onclick="closeModal('deleteModal')">إلغاء</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ARCHIVE CONFIRM MODAL -->
+<div id="archiveModal" class="modal-overlay">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="text-center">
+      <div class="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg width="28" height="28" fill="none" stroke="#b45309" stroke-width="2" viewBox="0 0 24 24"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
+      </div>
+      <h3 class="font-extrabold text-lg mb-2">بدء شهر جديد؟</h3>
+      <p class="text-slate-500 text-sm mb-5" id="archiveModalMsg">سيتم أرشفة جميع بيانات الشهر الحالي وحفظها بشكل دائم، ثم تبدأ الشاشات (المصاريف، السلف، أيام عمل المندوبين، الديون) من الصفر. رصيد صندوق السولار لن يتأثر.</p>
+      <div class="flex gap-3"><button class="btn btn-warning flex-1" onclick="confirmArchive()">نعم، ابدأ شهراً جديداً</button><button class="btn btn-secondary flex-1" onclick="closeModal('archiveModal')">إلغاء</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DATA STORE
+   - "active" data (expenses, workDays, dlgDebts) belongs to the CURRENT month only.
+   - "archives" holds a snapshot of every closed month: archives[monthKey] = {...}
+   - solarEntries and employees are NOT monthly — always cumulative.
+   - currentMonthKey ("YYYY-MM") tracks which month the active data belongs to.
+   - On every page load we check: if real current month != currentMonthKey, we
+     auto-archive the old data and reset active arrays before rendering anything.
+============================================================ */
+const STORAGE_KEYS={
+  expenses:'cet_expenses', employees:'cet_employees', solarEntries:'cet_solarEntries',
+  workDays:'cet_workDays', dlgDebts:'cet_dlgDebts',
+  archives:'cet_archives', currentMonthKey:'cet_currentMonthKey'
+};
+function loadData(k){try{return JSON.parse(localStorage.getItem(STORAGE_KEYS[k]||('cet_'+k)))||[];}catch{return[];}}
+function saveData(k,d){localStorage.setItem(STORAGE_KEYS[k]||('cet_'+k),JSON.stringify(d));}
+function loadObj(k){try{return JSON.parse(localStorage.getItem(STORAGE_KEYS[k]))||{};}catch{return{};}}
+function saveObj(k,d){localStorage.setItem(STORAGE_KEYS[k],JSON.stringify(d));}
+
+let expenses=loadData('expenses'), employees=loadData('employees'), solarEntries=loadData('solarEntries');
+let workDays=loadData('workDays'), dlgDebts=loadData('dlgDebts');
+let archives=loadObj('archives'); // { "2026-05": { expenses:[], workDays:[], dlgDebts:[], archivedAt } }
+let currentMonthKey=localStorage.getItem(STORAGE_KEYS.currentMonthKey) || '';
+
+function realCurrentMonthKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+
+/* ─── AUTO-ARCHIVE ON MONTH CHANGE ─── */
+function checkAndAutoArchive(){
+  const real=realCurrentMonthKey();
+  if(!currentMonthKey){
+    // first run ever — just set it, nothing to archive
+    currentMonthKey=real;
+    localStorage.setItem(STORAGE_KEYS.currentMonthKey,currentMonthKey);
+    return;
+  }
+  if(currentMonthKey!==real){
+    // archive everything tagged under the OLD currentMonthKey
+    archiveMonth(currentMonthKey, false);
+    // reset active arrays
+    expenses=[]; workDays=[]; dlgDebts=[];
+    saveData('expenses',expenses); saveData('workDays',workDays); saveData('dlgDebts',dlgDebts);
+    currentMonthKey=real;
+    localStorage.setItem(STORAGE_KEYS.currentMonthKey,currentMonthKey);
+  }
+}
+
+/** Archive a given monthKey's CURRENT active data into archives object */
+function archiveMonth(monthKey, isManual){
+  archives[monthKey]={
+    expenses:[...expenses],
+    workDays:[...workDays],
+    dlgDebts:[...dlgDebts],
+    archivedAt:new Date().toISOString(),
+    manual: !!isManual
+  };
+  saveObj('archives',archives);
+}
+
+/** Manual archive trigger from Archives page */
+function archiveNowManually(){
+  document.getElementById('archiveModalMsg').textContent=
+    `سيتم أرشفة بيانات شهر ${MONTHS_AR[parseInt(currentMonthKey.split('-')[1])-1]} ${currentMonthKey.split('-')[0]} وحفظها بشكل دائم، ثم تبدأ الشاشات من الصفر. رصيد صندوق السولار لن يتأثر.`;
+  document.getElementById('archiveModal').classList.add('open');
+}
+function confirmArchive(){
+  archiveMonth(currentMonthKey, true);
+  expenses=[]; workDays=[]; dlgDebts=[];
+  saveData('expenses',expenses); saveData('workDays',workDays); saveData('dlgDebts',dlgDebts);
+  closeModal('archiveModal');
+  toast('تمت الأرشفة وبدء شهر جديد ✓');
+  renderDashboard();
+  populateArchiveSelect();
+}
+
+/* =========================================================  UTILS  ========================================================= */
+function fmt(n){if(n===null||n===undefined||n==='')return'0.00';return Number(n).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5);}
+function toast(msg,type='success'){const el=document.getElementById('toast');el.textContent=msg;el.className=`show ${type}`;setTimeout(()=>{el.className='';},3000);}
+const CAT_CLASS={'سلف موظفين':'cat-advances','صندوق سولار':'cat-solar-fund','مصروف سولار':'cat-solar-exp','مصروفات مكتبية':'cat-office','صيانة سيارات':'cat-car','اتصالات':'cat-telecom','مصاريف أخرى':'cat-other'};
+function catBadge(cat){return`<span class="badge ${CAT_CLASS[cat]||'cat-other'}">${cat}</span>`;}
+function fmtDate(d){if(!d)return'-';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}
+function todayISO(){return new Date().toISOString().slice(0,10);}
+const MONTHS_AR=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const DAY_NAMES=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+/* =========================================================  NAV  ========================================================= */
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#sidebar nav a').forEach(a=>a.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  const lnk=document.querySelector(`#sidebar nav a[data-page="${name}"]`);
+  if(lnk)lnk.classList.add('active');
+  if(name==='dashboard')    renderDashboard();
+  if(name==='employees')    renderEmployees();
+  if(name==='expenses')     {renderExpensesTable();populateEmpFilter();}
+  if(name==='addExpense')   {populateEmpSelects();document.getElementById('expDate').value=todayISO();}
+  if(name==='empStatement') populateSelect('stmtEmp');
+  if(name==='solarFund')    {populateSelect('sfWithEmployee');renderSolarPage();document.getElementById('sfCapDate').value=todayISO();document.getElementById('sfWithDate').value=todayISO();if(document.getElementById('sfFilterYear'))document.getElementById('sfFilterYear').value=new Date().getFullYear();}
+  if(name==='delegates')    {populateDlgSelects();renderWorkDaysLog();renderDebtsLog();document.getElementById('dlgDate').value=todayISO();document.getElementById('dlgDebtDate').value=todayISO();}
+  if(name==='reports')      {initReportSelects();populateSelect('repEmpFilter',true);populateSelect('repEmpSelect');}
+  if(name==='archives')     populateArchiveSelect();
+  if(name==='vacations')    {populateVacSelects();renderVacationsLog();const yn=new Date().getFullYear();['vacLogYear','vacBalYear','vacSumYear'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=yn;});}
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+/* =========================================================  POPULATE HELPERS  ========================================================= */
+function populateSelect(id,addAll=false){
+  const el=document.getElementById(id);if(!el)return;
+  const cur=el.value;
+  el.innerHTML=addAll?'<option value="">الكل</option>':'<option value="">-- لا يوجد --</option>';
+  employees.forEach(e=>el.innerHTML+=`<option value="${e.name}">${e.name}</option>`);
+  el.value=cur;
+}
+function populateEmpSelects(){['expEmployee','editEmployee'].forEach(id=>populateSelect(id));}
+function populateEmpFilter(){populateSelect('filterEmp',true);}
+function populateDlgSelects(){
+  ['dlgEmpSel','dlgBulkEmp','dlgStmtEmp','dlgDebtEmp'].forEach(id=>populateSelect(id));
+  ['dlgLogEmpFilter','dlgDebtFilter'].forEach(id=>populateSelect(id,true));
+}
+
+/* =========================================================  DASHBOARD (current month only)  ========================================================= */
+function renderDashboard(){
+  document.getElementById('currentMonthLabel').textContent =
+    `${MONTHS_AR[parseInt(currentMonthKey.split('-')[1])-1]} ${currentMonthKey.split('-')[0]}`;
+
+  const total=expenses.reduce((s,e)=>s+Number(e.amount),0);
+  const adv=expenses.filter(e=>e.category==='سلف موظفين').reduce((s,e)=>s+Number(e.amount),0);
+  document.getElementById('statTotal').textContent=fmt(total);
+  document.getElementById('statAdvances').textContent=fmt(adv);
+
+  const{capital,spent,balance}=getSolarTotals();
+  document.getElementById('statSolarBalance').textContent=fmt(balance);
+  document.getElementById('statSolarMeta').textContent=`إيداع: ${fmt(capital)} | صرف: ${fmt(spent)}`;
+
+  const totalAllow=workDays.reduce((s,w)=>s+Number(w.rate),0);
+  const totalDebts=dlgDebts.reduce((s,d)=>s+Number(d.amount),0);
+  const net=totalAllow-totalDebts;
+  document.getElementById('statDelegates').textContent=fmt(Math.max(0,net));
+  document.getElementById('statDelegatesMeta').textContent=`بدل: ${fmt(totalAllow)} | ديون: ${fmt(totalDebts)}`;
+
+  const cats=['سلف موظفين','صندوق سولار','مصروف سولار','مصروفات مكتبية','صيانة سيارات','اتصالات','مصاريف أخرى'];
+  document.getElementById('dashCategorySummary').innerHTML=cats.map(cat=>{
+    const amt=expenses.filter(e=>e.category===cat).reduce((s,e)=>s+Number(e.amount),0);
+    const cnt=expenses.filter(e=>e.category===cat).length;
+    const cls=CAT_CLASS[cat]||'cat-other';
+    return`<div class="border border-slate-100 rounded-xl p-4 flex items-center gap-3 hover:shadow-sm transition-shadow"><div class="flex-1"><div class="text-xs font-semibold text-slate-500 mb-1">${cat}</div><div class="font-extrabold text-lg text-slate-800 num">${fmt(amt)} ₪</div><div class="text-xs text-slate-400">${cnt} عملية</div></div><span class="badge ${cls}">${cnt}</span></div>`;
+  }).join('');
+
+  const recent=[...expenses].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
+  const tbody=document.getElementById('dashRecentBody');
+  tbody.innerHTML=recent.length?recent.map(e=>`<tr><td class="num">${fmtDate(e.date)}</td><td>${catBadge(e.category)}</td><td class="text-slate-600">${e.desc||'-'}</td><td>${e.employee||'-'}</td><td class="font-bold num">${fmt(e.amount)} ₪</td></tr>`).join(''):'<tr><td colspan="5" class="text-center text-slate-400 py-8">لا توجد عمليات</td></tr>';
+}
+
+/* =========================================================  EMPLOYEES  ========================================================= */
+function addEmployee(){
+  const name=document.getElementById('empName').value.trim();
+  const phone=document.getElementById('empPhone').value.trim();
+  const title=document.getElementById('empTitle').value.trim();
+  const type=document.getElementById('empType').value;
+  const rate=parseFloat(document.getElementById('empDefaultRate').value)||100;
+  if(!name){toast('يرجى إدخال اسم الموظف','error');return;}
+  if(employees.find(e=>e.name===name)){toast('يوجد موظف بهذا الاسم مسبقاً','error');return;}
+  employees.push({id:uid(),name,phone,title,type,defaultRate:rate,createdAt:todayISO()});
+  saveData('employees',employees);
+  renderEmployees();
+  ['empName','empPhone','empTitle'].forEach(id=>document.getElementById(id).value='');
+  toast('تم إضافة الموظف ✓');
+}
+function deleteEmployee(id){employees=employees.filter(e=>e.id!==id);saveData('employees',employees);renderEmployees();toast('تم الحذف');}
+function renderEmployees(){
+  document.getElementById('empCount').textContent=employees.length;
+  const tbody=document.getElementById('empTableBody');
+  if(!employees.length){tbody.innerHTML='<tr><td colspan="7" class="text-center text-slate-400 py-8">لا يوجد موظفون</td></tr>';return;}
+  tbody.innerHTML=employees.map((emp,i)=>{
+    const adv=expenses.filter(e=>e.employee===emp.name&&e.category==='سلف موظفين').reduce((s,e)=>s+Number(e.amount),0);
+    const typeBadge=emp.type==='مندوب'?'<span class="badge cat-delegate">مندوب</span>':'<span class="badge cat-other">موظف</span>';
+    return`<tr><td class="num text-slate-400">${i+1}</td><td class="font-semibold">${emp.name}</td><td class="num text-slate-600 text-sm" dir="ltr">${emp.phone||'-'}</td><td class="text-slate-600 text-sm">${emp.title||'-'}</td><td>${typeBadge}</td><td class="font-bold num ${adv>0?'text-purple-700':'text-slate-400'}">${fmt(adv)} ₪</td><td><button class="btn btn-danger text-xs py-1 px-2" onclick="deleteEmployee('${emp.id}')">حذف</button></td></tr>`;
+  }).join('');
+}
+
+/* =========================================================  EXPENSES (current month)  ========================================================= */
+function addExpense(){
+  const date=document.getElementById('expDate').value;
+  const category=document.getElementById('expCategory').value;
+  const amount=parseFloat(document.getElementById('expAmount').value);
+  const employee=document.getElementById('expEmployee').value;
+  const desc=document.getElementById('expDesc').value.trim();
+  if(!date){toast('يرجى تحديد التاريخ','error');return;}
+  if(!category){toast('يرجى اختيار بند المصروف','error');return;}
+  if(!amount||amount<=0){toast('يرجى إدخال مبلغ صحيح','error');return;}
+  expenses.push({id:uid(),date,category,amount,employee,desc,createdAt:new Date().toISOString()});
+  saveData('expenses',expenses);
+  clearExpenseForm();
+  toast('تم حفظ المصروف ✓');
+}
+function clearExpenseForm(){
+  document.getElementById('expDate').value=todayISO();
+  ['expCategory','expAmount','expEmployee','expDesc'].forEach(id=>document.getElementById(id).value='');
+}
+function renderExpensesTable(){
+  const catF=document.getElementById('filterCat').value;
+  const fromF=document.getElementById('filterFrom').value;
+  const toF=document.getElementById('filterTo').value;
+  const empF=document.getElementById('filterEmp').value;
+  let filtered=expenses.filter(e=>{
+    if(catF&&e.category!==catF)return false;
+    if(fromF&&e.date<fromF)return false;
+    if(toF&&e.date>toF)return false;
+    if(empF&&e.employee!==empF)return false;
+    return true;
+  }).sort((a,b)=>b.date.localeCompare(a.date));
+  const total=filtered.reduce((s,e)=>s+Number(e.amount),0);
+  document.getElementById('expFilterTotal').textContent=fmt(total)+' ₪';
+  document.getElementById('filteredCount').textContent=`${filtered.length} نتيجة`;
+  const tbody=document.getElementById('expTableBody');
+  tbody.innerHTML=filtered.length?filtered.map((e,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(e.date)}</td><td>${catBadge(e.category)}</td><td class="text-slate-600 text-sm">${e.desc||'-'}</td><td>${e.employee||'-'}</td><td class="font-bold num">${fmt(e.amount)} ₪</td><td><div class="flex gap-1"><button class="btn btn-secondary text-xs py-1 px-2" onclick="openEdit('${e.id}')">تعديل</button><button class="btn btn-danger text-xs py-1 px-2" onclick="openDelete('${e.id}')">حذف</button></div></td></tr>`).join(''):'<tr><td colspan="7" class="text-center text-slate-400 py-8">لا توجد نتائج</td></tr>';
+}
+function clearExpFilters(){['filterCat','filterFrom','filterTo','filterEmp'].forEach(id=>document.getElementById(id).value='');renderExpensesTable();}
+
+let _deleteId=null;
+function openEdit(id){
+  const e=expenses.find(x=>x.id===id);if(!e)return;
+  populateEmpSelects();
+  document.getElementById('editId').value=id;
+  document.getElementById('editDate').value=e.date;
+  document.getElementById('editCategory').value=e.category;
+  document.getElementById('editAmount').value=e.amount;
+  document.getElementById('editEmployee').value=e.employee||'';
+  document.getElementById('editDesc').value=e.desc||'';
+  document.getElementById('editModal').classList.add('open');
+}
+function saveEdit(){
+  const id=document.getElementById('editId').value;
+  const date=document.getElementById('editDate').value;
+  const cat=document.getElementById('editCategory').value;
+  const amt=parseFloat(document.getElementById('editAmount').value);
+  const emp=document.getElementById('editEmployee').value;
+  const desc=document.getElementById('editDesc').value.trim();
+  if(!date||!cat||!amt||amt<=0){toast('يرجى تعبئة الحقول الإجبارية','error');return;}
+  const idx=expenses.findIndex(x=>x.id===id);if(idx===-1)return;
+  expenses[idx]={...expenses[idx],date,category:cat,amount:amt,employee:emp,desc};
+  saveData('expenses',expenses);closeModal('editModal');renderExpensesTable();toast('تم التعديل ✓');
+}
+function openDelete(id){_deleteId=id;document.getElementById('deleteModal').classList.add('open');}
+function confirmDelete(){expenses=expenses.filter(x=>x.id!==_deleteId);saveData('expenses',expenses);_deleteId=null;closeModal('deleteModal');renderExpensesTable();toast('تم الحذف');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+/* =========================================================  HELPERS: combine current + archived data  ========================================================= */
+/** All expenses across all time (current month + every archived month) */
+function allExpensesEver(){
+  let all=[...expenses];
+  Object.values(archives).forEach(m=>{ if(Array.isArray(m.expenses)) all=all.concat(m.expenses); });
+  return all;
+}
+/** All work days across all time */
+function allWorkDaysEver(){
+  let all=[...workDays];
+  Object.values(archives).forEach(m=>{ if(Array.isArray(m.workDays)) all=all.concat(m.workDays); });
+  return all;
+}
+/** All delegate debts across all time */
+function allDebtsEver(){
+  let all=[...dlgDebts];
+  Object.values(archives).forEach(m=>{ if(Array.isArray(m.dlgDebts)) all=all.concat(m.dlgDebts); });
+  return all;
+}
+
+/* =========================================================  EMP STATEMENT (spans current+archive)  ========================================================= */
+function generateStatement(){
+  const empName=document.getElementById('stmtEmp').value;
+  const from=document.getElementById('stmtFrom').value;
+  const to=document.getElementById('stmtTo').value;
+  if(!empName){toast('يرجى اختيار موظف','error');return;}
+  const emp=employees.find(e=>e.name===empName);
+  let rows=allExpensesEver().filter(e=>e.employee===empName);
+  if(from)rows=rows.filter(e=>e.date>=from);
+  if(to)rows=rows.filter(e=>e.date<=to);
+  rows.sort((a,b)=>a.date.localeCompare(b.date));
+  const total=rows.reduce((s,e)=>s+Number(e.amount),0);
+  document.getElementById('stmtEmpInfo').innerHTML=`<div class="flex flex-wrap gap-6 items-start"><div class="flex-1"><div class="text-xs text-slate-400 font-semibold uppercase mb-1">الموظف</div><div class="text-xl font-extrabold text-slate-800">${emp?emp.name:empName}</div>${emp&&emp.title?`<div class="text-sm text-slate-500">${emp.title}</div>`:''}</div><div class="text-left"><div class="text-xs text-slate-400 font-semibold uppercase mb-1">الفترة</div><div class="text-sm text-slate-600">${from?fmtDate(from):'من البداية'} — ${to?fmtDate(to):'حتى الآن'}</div></div><div class="text-left"><div class="text-xs text-slate-400 font-semibold uppercase mb-1">الإجمالي</div><div class="text-2xl font-extrabold num text-blue-700">${fmt(total)} ₪</div></div></div>`;
+  const tbody=document.getElementById('stmtTableBody');
+  tbody.innerHTML=rows.length?rows.map((e,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(e.date)}</td><td>${catBadge(e.category)}</td><td class="text-slate-600">${e.desc||'-'}</td><td class="font-bold num">${fmt(e.amount)} ₪</td></tr>`).join(''):'<tr><td colspan="5" class="text-center text-slate-400 py-6">لا توجد عمليات</td></tr>';
+  document.getElementById('stmtTotal').textContent=fmt(total)+' ₪';
+  document.getElementById('printStmtSubtitle').textContent=`الموظف: ${empName} | ${from?fmtDate(from):'من البداية'} - ${to?fmtDate(to):'حتى الآن'}`;
+  document.getElementById('stmtResult').classList.remove('hidden');
+}
+
+/* =========================================================  SOLAR FUND (never resets)  ========================================================= */
+function getSolarTotals(){
+  const capital=solarEntries.filter(e=>e.type==='capital').reduce((s,e)=>s+Number(e.amount),0);
+  const spent=solarEntries.filter(e=>e.type==='withdraw').reduce((s,e)=>s+Number(e.amount),0);
+  return{capital,spent,balance:capital-spent};
+}
+function addSolarCapital(){
+  const date=document.getElementById('sfCapDate').value;
+  const amount=parseFloat(document.getElementById('sfCapAmount').value);
+  const note=document.getElementById('sfCapNote').value.trim();
+  if(!date){toast('يرجى تحديد التاريخ','error');return;}
+  if(!amount||amount<=0){toast('يرجى إدخال مبلغ صحيح','error');return;}
+  solarEntries.push({id:uid(),date,type:'capital',amount,note,createdAt:new Date().toISOString()});
+  saveData('solarEntries',solarEntries);
+  document.getElementById('sfCapDate').value=todayISO();document.getElementById('sfCapAmount').value='';document.getElementById('sfCapNote').value='';
+  renderSolarPage();toast('تم إيداع رأس المال ✓');
+}
+function addSolarWithdraw(){
+  const date=document.getElementById('sfWithDate').value;
+  const amount=parseFloat(document.getElementById('sfWithAmount').value);
+  const employee=document.getElementById('sfWithEmployee').value;
+  const desc=document.getElementById('sfWithDesc').value.trim();
+  if(!date){toast('يرجى تحديد التاريخ','error');return;}
+  if(!amount||amount<=0){toast('يرجى إدخال مبلغ صحيح','error');return;}
+  const{balance}=getSolarTotals();
+  if(amount>balance){toast(`تحذير: المبلغ (${fmt(amount)} ₪) يتجاوز الرصيد (${fmt(balance)} ₪)!`,'error');return;}
+  solarEntries.push({id:uid(),date,type:'withdraw',amount,employee,note:desc,createdAt:new Date().toISOString()});
+  saveData('solarEntries',solarEntries);
+  // Also push to CURRENT MONTH expenses (this month's "مصروف سولار")
+  expenses.push({id:uid(),date,category:'مصروف سولار',amount,employee,desc:desc||'سحب من صندوق السولار',createdAt:new Date().toISOString()});
+  saveData('expenses',expenses);
+  document.getElementById('sfWithDate').value=todayISO();['sfWithAmount','sfWithDesc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sfWithEmployee').value='';
+  renderSolarPage();toast('تم تسجيل السحب ✓');
+}
+function deleteSolarEntry(id){
+  if(!confirm('حذف هذه الحركة؟'))return;
+  solarEntries=solarEntries.filter(e=>e.id!==id);saveData('solarEntries',solarEntries);renderSolarPage();toast('تم الحذف');
+}
+function renderSolarPage(){
+  const{capital,spent,balance}=getSolarTotals();
+  document.getElementById('sfTotalCapital').textContent=fmt(capital);
+  document.getElementById('sfTotalSpent').textContent=fmt(spent);
+  document.getElementById('sfBalance').textContent=fmt(balance);
+  const pct=capital>0?Math.min(100,(spent/capital)*100):0;
+  document.getElementById('sfPct').textContent=pct.toFixed(1)+'%';
+  document.getElementById('sfProgressBar').style.width=pct+'%';
+  const bc=document.getElementById('sfBalanceCard');
+  bc.style.background=balance<0?'linear-gradient(135deg,#991b1b,#ef4444)':balance<capital*.2?'linear-gradient(135deg,#92400e,#f59e0b)':'linear-gradient(135deg,#1e40af,#3b82f6)';
+  renderSolarLedger();
+}
+function renderSolarLedger(){
+  const mf=document.getElementById('sfFilterMonth')?document.getElementById('sfFilterMonth').value:'';
+  const yf=document.getElementById('sfFilterYear')?document.getElementById('sfFilterYear').value:'';
+  const allSorted=[...solarEntries].sort((a,b)=>a.date.localeCompare(b.date)||a.createdAt.localeCompare(b.createdAt));
+  let running=0;
+  const withBal=allSorted.map(e=>{running+=e.type==='capital'?Number(e.amount):-Number(e.amount);return{...e,runningBalance:running};});
+  let disp=withBal;
+  if(mf)disp=disp.filter(e=>e.date&&e.date.slice(5,7)===mf.padStart(2,'0'));
+  if(yf)disp=disp.filter(e=>e.date&&e.date.slice(0,4)===String(yf));
+  const tbody=document.getElementById('sfLedgerBody');
+  tbody.innerHTML=disp.length?disp.map((e,i)=>{
+    const isC=e.type==='capital';
+    const typeL=isC?`<span class="badge" style="background:#d1fae5;color:#065f46;">⬆ إيداع</span>`:`<span class="badge cat-solar-exp">⬇ سحب</span>`;
+    const cells=isC?`<td class="font-bold num text-emerald-600">${fmt(e.amount)}</td><td class="text-slate-300">—</td>`:`<td class="text-slate-300">—</td><td class="font-bold num text-amber-600">${fmt(e.amount)}</td>`;
+    const bc=e.runningBalance<0?'color:#dc2626':e.runningBalance<200?'color:#d97706':'color:#1d4ed8';
+    return`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(e.date)}</td><td>${typeL}</td><td class="text-slate-600 text-sm">${e.note||e.employee||'-'}</td>${cells}<td class="font-extrabold num" style="${bc}">${fmt(e.runningBalance)}</td><td><button class="btn btn-danger text-xs py-1 px-2" onclick="deleteSolarEntry('${e.id}')">حذف</button></td></tr>`;
+  }).join(''):'<tr><td colspan="8" class="text-center text-slate-400 py-8">لا توجد حركات</td></tr>';
+}
+
+/* =========================================================  DELEGATES — REGISTER (current month)  ========================================================= */
+function switchDlgTab(name){
+  ['register','debts','statement','summary'].forEach(t=>{
+    document.getElementById(`dlgTab-${t}`).classList.toggle('hidden',t!==name);
+    const btn=document.getElementById(`dlgTabBtn-${t}`);
+    if(btn)btn.className=t===name?'btn btn-primary':'btn btn-secondary';
+  });
+  if(name==='statement')populateDlgSelects();
+  if(name==='debts'){populateDlgSelects();renderDebtsLog();}
+}
+
+function addWorkDay(){
+  const empName=document.getElementById('dlgEmpSel').value;
+  const date=document.getElementById('dlgDate').value;
+  const rate=parseFloat(document.getElementById('dlgRate').value);
+  const note=document.getElementById('dlgNote').value.trim();
+  if(!empName){toast('اختر المندوب','error');return;}
+  if(!date){toast('حدد التاريخ','error');return;}
+  if(!rate||rate<=0){toast('أدخل البدل اليومي','error');return;}
+  if(workDays.find(w=>w.empName===empName&&w.date===date)){toast('يوم العمل هذا مسجل مسبقاً!','error');return;}
+  workDays.push({id:uid(),empName,date,rate,note,createdAt:new Date().toISOString()});
+  saveData('workDays',workDays);
+  document.getElementById('dlgNote').value='';document.getElementById('dlgDate').value=todayISO();
+  renderWorkDaysLog();toast('تم تسجيل يوم العمل ✓');
+}
+
+function addBulkWorkDays(){
+  const empName=document.getElementById('dlgBulkEmp').value;
+  const from=document.getElementById('dlgBulkFrom').value;
+  const to=document.getElementById('dlgBulkTo').value;
+  const rate=parseFloat(document.getElementById('dlgBulkRate').value);
+  const checked=[...document.querySelectorAll('.dlg-weekday:checked')].map(c=>parseInt(c.value));
+  if(!empName){toast('اختر المندوب','error');return;}
+  if(!from||!to){toast('حدد الفترة','error');return;}
+  if(from>to){toast('التاريخ من يجب أن يكون قبل إلى','error');return;}
+  if(!rate||rate<=0){toast('أدخل البدل اليومي','error');return;}
+  if(!checked.length){toast('اختر أيام العمل في الأسبوع','error');return;}
+  let added=0,skipped=0;
+  let cur=new Date(from);const end=new Date(to);
+  while(cur<=end){
+    if(checked.includes(cur.getDay())){
+      const ds=cur.toISOString().slice(0,10);
+      if(!workDays.find(w=>w.empName===empName&&w.date===ds)){workDays.push({id:uid(),empName,date:ds,rate,note:'',createdAt:new Date().toISOString()});added++;}else{skipped++;}
+    }
+    cur.setDate(cur.getDate()+1);
+  }
+  saveData('workDays',workDays);renderWorkDaysLog();
+  toast(`تم تسجيل ${added} يوم${skipped?' (تجاوز '+skipped+' مكرر)':''} ✓`);
+}
+
+function calcBulkPreview(){
+  const from=document.getElementById('dlgBulkFrom').value;
+  const to=document.getElementById('dlgBulkTo').value;
+  const checked=[...document.querySelectorAll('.dlg-weekday:checked')].map(c=>parseInt(c.value));
+  const rate=parseFloat(document.getElementById('dlgBulkRate').value)||0;
+  const prev=document.getElementById('bulkPreview');
+  if(!from||!to||from>to){prev.classList.add('hidden');return;}
+  let count=0,cur=new Date(from),end=new Date(to);
+  while(cur<=end){if(checked.includes(cur.getDay()))count++;cur.setDate(cur.getDate()+1);}
+  prev.textContent=`⟵ ${count} يوم عمل × ${fmt(rate)} ₪ = ${fmt(count*rate)} ₪`;
+  prev.classList.remove('hidden');
+}
+
+function deleteWorkDay(id){if(!confirm('حذف هذا اليوم؟'))return;workDays=workDays.filter(w=>w.id!==id);saveData('workDays',workDays);renderWorkDaysLog();toast('تم الحذف');}
+
+function renderWorkDaysLog(){
+  populateDlgSelects();
+  const empF=document.getElementById('dlgLogEmpFilter')?document.getElementById('dlgLogEmpFilter').value:'';
+  let rows=[...workDays];
+  if(empF)rows=rows.filter(w=>w.empName===empF);
+  rows.sort((a,b)=>b.date.localeCompare(a.date));
+  const total=rows.reduce((s,w)=>s+Number(w.rate),0);
+  document.getElementById('dlgLogCount').textContent=`${rows.length} يوم`;
+  document.getElementById('dlgLogTotal').textContent=fmt(total)+' ₪';
+  const tbody=document.getElementById('dlgLogBody');
+  tbody.innerHTML=rows.length?rows.map((w,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(w.date)}</td><td class="text-slate-600 text-sm">${DAY_NAMES[new Date(w.date).getDay()]}</td><td class="font-semibold">${w.empName}</td><td class="font-bold num text-emerald-700">${fmt(w.rate)} ₪</td><td class="text-slate-500 text-sm">${w.note||'-'}</td><td><button class="btn btn-danger text-xs py-1 px-2" onclick="deleteWorkDay('${w.id}')">حذف</button></td></tr>`).join(''):'<tr><td colspan="7" class="text-center text-slate-400 py-8">لا توجد أيام مسجلة</td></tr>';
+}
+
+/* =========================================================  DELEGATES — DEBTS (current month)  ========================================================= */
+function addDelegateDebt(){
+  const empName=document.getElementById('dlgDebtEmp').value;
+  const date=document.getElementById('dlgDebtDate').value;
+  const type=document.getElementById('dlgDebtType').value;
+  const amount=parseFloat(document.getElementById('dlgDebtAmount').value);
+  const note=document.getElementById('dlgDebtNote').value.trim();
+  if(!empName){toast('اختر المندوب','error');return;}
+  if(!date){toast('حدد التاريخ','error');return;}
+  if(!amount||amount<=0){toast('أدخل المبلغ','error');return;}
+  dlgDebts.push({id:uid(),empName,date,type,amount,note,createdAt:new Date().toISOString()});
+  saveData('dlgDebts',dlgDebts);
+  document.getElementById('dlgDebtAmount').value='';document.getElementById('dlgDebtNote').value='';document.getElementById('dlgDebtDate').value=todayISO();
+  renderDebtsLog();toast('تم تسجيل الدين ✓');
+}
+function deleteDebt(id){if(!confirm('حذف هذا الدين؟'))return;dlgDebts=dlgDebts.filter(d=>d.id!==id);saveData('dlgDebts',dlgDebts);renderDebtsLog();toast('تم الحذف');}
+
+function renderDebtsLog(){
+  const empF=document.getElementById('dlgDebtFilter')?document.getElementById('dlgDebtFilter').value:'';
+  let rows=[...dlgDebts];
+  if(empF)rows=rows.filter(d=>d.empName===empF);
+  rows.sort((a,b)=>b.date.localeCompare(a.date));
+  const total=rows.reduce((s,d)=>s+Number(d.amount),0);
+  document.getElementById('dlgDebtTotal').textContent=fmt(total)+' ₪';
+  const tbody=document.getElementById('dlgDebtBody');
+  tbody.innerHTML=rows.length?rows.map((d,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(d.date)}</td><td class="font-semibold">${d.empName}</td><td><span class="badge cat-other">${d.type}</span></td><td class="text-slate-600 text-sm">${d.note||'-'}</td><td class="font-bold num text-red-600">${fmt(d.amount)} ₪</td><td><button class="btn btn-danger text-xs py-1 px-2" onclick="deleteDebt('${d.id}')">حذف</button></td></tr>`).join(''):'<tr><td colspan="7" class="text-center text-slate-400 py-8">لا توجد ديون</td></tr>';
+}
+
+/* =========================================================  DELEGATE STATEMENT (spans current + archive)  ========================================================= */
+function generateDlgStatement(){
+  const empName=document.getElementById('dlgStmtEmp').value;
+  const from=document.getElementById('dlgStmtFrom').value;
+  const to=document.getElementById('dlgStmtTo').value;
+  if(!empName){toast('اختر المندوب','error');return;}
+  const emp=employees.find(e=>e.name===empName);
+  let days=allWorkDaysEver().filter(w=>w.empName===empName);
+  let debts=allDebtsEver().filter(d=>d.empName===empName);
+  if(from){days=days.filter(w=>w.date>=from);debts=debts.filter(d=>d.date>=from);}
+  if(to){days=days.filter(w=>w.date<=to);debts=debts.filter(d=>d.date<=to);}
+  days.sort((a,b)=>a.date.localeCompare(b.date));debts.sort((a,b)=>a.date.localeCompare(b.date));
+  const totalAllow=days.reduce((s,w)=>s+Number(w.rate),0);
+  const totalDebts=debts.reduce((s,d)=>s+Number(d.amount),0);
+  const net=totalAllow-totalDebts;
+  document.getElementById('dlgStmtHeader').innerHTML=`<div class="flex flex-wrap gap-4 items-center"><div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#3d57fb,#2638f0);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="color:#fff;font-weight:800;font-size:22px;">${empName.charAt(0)}</span></div><div class="flex-1"><div class="text-xl font-extrabold text-slate-800">${empName}</div>${emp&&emp.title?`<div class="text-sm text-slate-500">${emp.title}</div>`:''}</div><div class="text-sm text-slate-500">الفترة: <strong>${from?fmtDate(from):'من البداية'}</strong> — <strong>${to?fmtDate(to):'حتى الآن'}</strong></div></div>`;
+  const netBg=net>=0?'linear-gradient(135deg,#059669,#10b981)':'linear-gradient(135deg,#dc2626,#ef4444)';
+  document.getElementById('dlgStmtStats').innerHTML=`
+    <div class="stat-card" style="background:linear-gradient(135deg,#065f46,#059669);"><div class="text-emerald-100 text-xs font-semibold mb-1">أيام العمل</div><div class="text-3xl font-extrabold num">${days.length}</div><div class="text-emerald-200 text-sm">يوم</div></div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#1e40af,#3b82f6);"><div class="text-blue-100 text-xs font-semibold mb-1">إجمالي البدل المستحق</div><div class="text-3xl font-extrabold num">${fmt(totalAllow)}</div><div class="text-blue-200 text-sm">شيكل</div></div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#b91c1c,#ef4444);"><div class="text-red-100 text-xs font-semibold mb-1">إجمالي الديون</div><div class="text-3xl font-extrabold num">${fmt(totalDebts)}</div><div class="text-red-200 text-sm">شيكل</div></div>
+    <div class="stat-card" style="background:${netBg};"><div class="text-white text-xs font-semibold mb-1">${net>=0?'المستحق للمندوب':'المتبقي على المندوب'}</div><div class="text-3xl font-extrabold num">${fmt(Math.abs(net))}</div><div class="text-white text-sm opacity-80">شيكل</div></div>`;
+  document.getElementById('dlgStmtDaysBody').innerHTML=days.length?days.map((w,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(w.date)}</td><td class="text-slate-600">${DAY_NAMES[new Date(w.date).getDay()]}</td><td class="font-bold num text-emerald-700">${fmt(w.rate)} ₪</td><td class="text-slate-500 text-sm">${w.note||'-'}</td></tr>`).join(''):'<tr><td colspan="5" class="text-center text-slate-400 py-4">لا توجد أيام</td></tr>';
+  document.getElementById('dlgStmtDaysFoot').innerHTML=`<tr style="border-top:2px solid #e2e8f0;"><td colspan="3" class="py-3 px-3 font-extrabold">الإجمالي</td><td class="py-3 px-3 num font-extrabold text-emerald-700">${fmt(totalAllow)} ₪</td><td></td></tr>`;
+  document.getElementById('dlgStmtDebtsBody').innerHTML=debts.length?debts.map((d,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(d.date)}</td><td><span class="badge cat-other">${d.type}</span></td><td class="text-slate-600 text-sm">${d.note||'-'}</td><td class="font-bold num text-red-600">${fmt(d.amount)} ₪</td></tr>`).join(''):'<tr><td colspan="5" class="text-center text-slate-400 py-4">لا توجد ديون</td></tr>';
+  document.getElementById('dlgStmtDebtsFoot').innerHTML=`<tr style="border-top:2px solid #fecaca;"><td colspan="4" class="py-3 px-3 font-extrabold text-red-700">إجمالي الديون</td><td class="py-3 px-3 num font-extrabold text-red-700">${fmt(totalDebts)} ₪</td></tr>`;
+  const sbg=net>=0?'#f0fdf4':'#fff1f2';const sc=net>=0?'#065f46':'#9f1239';
+  const smsg=net>=0?`المندوب يستحق <strong>${fmt(net)} ₪</strong> من الشركة بعد خصم ديونه.`:`على المندوب دفع <strong>${fmt(Math.abs(net))} ₪</strong> للشركة.`;
+  document.getElementById('dlgStmtSettlement').innerHTML=`<div style="background:${sbg};border-radius:10px;padding:20px;"><div class="text-base font-extrabold mb-3" style="color:${sc};">${net>=0?'✅':'⚠️'} التسوية النهائية</div><div class="grid grid-cols-3 gap-4 mb-4 text-center"><div><div class="text-xs text-slate-500 mb-1">البدل</div><div class="text-xl font-extrabold num text-emerald-700">${fmt(totalAllow)} ₪</div></div><div><div class="text-xs text-slate-500 mb-1">الديون</div><div class="text-xl font-extrabold num text-red-600">${fmt(totalDebts)} ₪</div></div><div><div class="text-xs text-slate-500 mb-1">الصافي</div><div class="text-2xl font-extrabold num" style="color:${sc};">${net>=0?'+':'−'}${fmt(Math.abs(net))} ₪</div></div></div><div class="text-sm font-semibold" style="color:${sc};">${smsg}</div></div>`;
+  document.getElementById('printDlgStmtSub').textContent=`المندوب: ${empName} | ${from?fmtDate(from):'من البداية'} — ${to?fmtDate(to):'حتى الآن'}`;
+  document.getElementById('dlgStmtResult').classList.remove('hidden');
+}
+
+/* =========================================================  ALL DELEGATES SUMMARY (spans current + archive)  ========================================================= */
+function generateDlgSummary(){
+  const from=document.getElementById('dlgSumFrom').value;
+  const to=document.getElementById('dlgSumTo').value;
+  const aw=allWorkDaysEver(), ad=allDebtsEver();
+  const allNames=[...new Set([...aw.map(w=>w.empName),...ad.map(d=>d.empName)])];
+  let fd=[...aw],fdb=[...ad];
+  if(from){fd=fd.filter(w=>w.date>=from);fdb=fdb.filter(d=>d.date>=from);}
+  if(to){fd=fd.filter(w=>w.date<=to);fdb=fdb.filter(d=>d.date<=to);}
+  const rows=allNames.map(name=>{
+    const days=fd.filter(w=>w.empName===name);
+    const debts=fdb.filter(d=>d.empName===name);
+    const allow=days.reduce((s,w)=>s+Number(w.rate),0);
+    const dbt=debts.reduce((s,d)=>s+Number(d.amount),0);
+    return{name,days:days.length,allowance:allow,debts:dbt,net:allow-dbt};
+  }).filter(r=>r.days>0||r.debts>0).sort((a,b)=>b.allowance-a.allowance);
+  const gDays=rows.reduce((s,r)=>s+r.days,0);
+  const gAllow=rows.reduce((s,r)=>s+r.allowance,0);
+  const gDebts=rows.reduce((s,r)=>s+r.debts,0);
+  const gNet=gAllow-gDebts;
+  document.getElementById('dlgSumCards').innerHTML=`
+    <div class="stat-card" style="background:linear-gradient(135deg,#065f46,#059669);"><div class="text-emerald-100 text-xs font-semibold mb-1">إجمالي أيام العمل</div><div class="text-3xl font-extrabold num">${gDays}</div><div class="text-emerald-200 text-sm">${rows.length} مندوب</div></div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#1e40af,#3b82f6);"><div class="text-blue-100 text-xs font-semibold mb-1">إجمالي البدل</div><div class="text-3xl font-extrabold num">${fmt(gAllow)}</div><div class="text-blue-200 text-sm">شيكل</div></div>
+    <div class="stat-card" style="background:${gNet>=0?'linear-gradient(135deg,#059669,#10b981)':'linear-gradient(135deg,#dc2626,#ef4444)'};"><div class="text-white text-xs font-semibold mb-1">الصافي الكلي</div><div class="text-3xl font-extrabold num">${fmt(gNet)}</div><div class="text-white text-sm opacity-80">شيكل</div></div>`;
+  document.getElementById('dlgSumBody').innerHTML=rows.length?rows.map((r,i)=>{
+    const nc=r.net>=0?'text-emerald-700':'text-red-600';
+    return`<tr><td class="num text-slate-400">${i+1}</td><td class="font-semibold">${r.name}</td><td class="num font-bold">${r.days}</td><td class="num font-bold text-emerald-700">${fmt(r.allowance)} ₪</td><td class="num font-bold text-red-600">${fmt(r.debts)} ₪</td><td class="num font-extrabold ${nc}">${r.net>=0?'+':'−'}${fmt(Math.abs(r.net))} ₪</td></tr>`;
+  }).join(''):'<tr><td colspan="6" class="text-center text-slate-400 py-6">لا توجد بيانات</td></tr>';
+  document.getElementById('dlgSumFoot').innerHTML=`<tr style="border-top:2.5px solid #2638f0;"><td colspan="2" class="py-3 px-3 font-extrabold text-blue-700">المجموع النهائي</td><td class="py-3 px-3 num font-extrabold">${gDays}</td><td class="py-3 px-3 num font-extrabold text-emerald-700">${fmt(gAllow)} ₪</td><td class="py-3 px-3 num font-extrabold text-red-600">${fmt(gDebts)} ₪</td><td class="py-3 px-3 num font-extrabold ${gNet>=0?'text-emerald-700':'text-red-600'}">${gNet>=0?'+':'−'}${fmt(Math.abs(gNet))} ₪</td></tr>`;
+  document.getElementById('printDlgSumSub').textContent=`الفترة: ${from?fmtDate(from):'من البداية'} — ${to?fmtDate(to):'حتى الآن'}`;
+  document.getElementById('dlgSumResult').classList.remove('hidden');
+}
+
+/* =========================================================  REPORTS (auto-detects current month vs archived month)  ========================================================= */
+function switchRepTab(name){
+  ['monthly','employee','empSummary'].forEach(t=>{
+    document.getElementById(`repTab-${t}`).classList.toggle('hidden',t!==name);
+    const btn=document.getElementById(`tabBtn-${t}`);
+    if(btn)btn.className=t===name?'btn btn-primary':'btn btn-secondary';
+  });
+  if(name==='employee'){populateSelect('repEmpSelect');}
+  if(name==='monthly'){populateSelect('repEmpFilter',true);}
+}
+function initReportSelects(){
+  const now=new Date();document.getElementById('repMonth').value=now.getMonth()+1;document.getElementById('repYear').value=now.getFullYear();
+  populateSelect('repEmpFilter',true);populateSelect('repEmpSelect');
+}
+function generateReport(){
+  const month=parseInt(document.getElementById('repMonth').value);
+  const year=parseInt(document.getElementById('repYear').value);
+  const empF=document.getElementById('repEmpFilter').value;
+  const catF=document.getElementById('repCatFilter').value;
+  if(!month||!year){toast('يرجى تحديد الشهر والسنة','error');return;}
+  const mm=String(month).padStart(2,'0');const prefix=`${year}-${mm}`;
+  // Pick the right data source: current month or archived month
+  const sourceExpenses = (prefix===currentMonthKey) ? expenses : (archives[prefix]?archives[prefix].expenses:[]);
+  let rows=sourceExpenses.filter(e=>e.date&&e.date.startsWith(prefix));
+  if(empF)rows=rows.filter(e=>e.employee===empF);
+  if(catF)rows=rows.filter(e=>e.category===catF);
+  rows.sort((a,b)=>a.date.localeCompare(b.date));
+  const grandTotal=rows.reduce((s,e)=>s+Number(e.amount),0);
+  const advT=rows.filter(e=>e.category==='سلف موظفين').reduce((s,e)=>s+Number(e.amount),0);
+  const solT=rows.filter(e=>e.category==='مصروف سولار').reduce((s,e)=>s+Number(e.amount),0);
+  document.getElementById('repMiniStats').innerHTML=`
+    <div class="stat-card" style="background:linear-gradient(135deg,#2638f0,#3d57fb);"><div class="text-blue-100 text-xs font-semibold mb-1">إجمالي الشهر</div><div class="text-2xl font-extrabold num">${fmt(grandTotal)}</div><div class="text-blue-200 text-sm">${rows.length} عملية</div></div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#7e22ce,#9333ea);"><div class="text-purple-100 text-xs font-semibold mb-1">السلف</div><div class="text-2xl font-extrabold num">${fmt(advT)}</div><div class="text-purple-200 text-sm">شيكل</div></div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#b45309,#f59e0b);"><div class="text-amber-100 text-xs font-semibold mb-1">مصروف السولار</div><div class="text-2xl font-extrabold num">${fmt(solT)}</div><div class="text-amber-200 text-sm">شيكل</div></div>`;
+  const cats=['سلف موظفين','صندوق سولار','مصروف سولار','مصروفات مكتبية','صيانة سيارات','اتصالات','مصاريف أخرى'];
+  const sd=cats.map(cat=>({cat,count:rows.filter(e=>e.category===cat).length,total:rows.filter(e=>e.category===cat).reduce((s,e)=>s+Number(e.amount),0)})).filter(x=>x.count>0);
+  document.getElementById('repSummaryBody').innerHTML=sd.map(x=>{
+    const pct=grandTotal>0?((x.total/grandTotal)*100).toFixed(1):'0.0';
+    return`<tr><td>${catBadge(x.cat)}</td><td class="num">${x.count}</td><td class="font-bold num">${fmt(x.total)} ₪</td><td><div class="flex items-center gap-2"><div class="flex-1 bg-slate-100 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width:${pct}%"></div></div><span class="text-xs num text-slate-500">${pct}%</span></div></td></tr>`;
+  }).join('');
+  document.getElementById('repSummaryFoot').innerHTML=`<tr style="border-top:2px solid #e2e8f0;"><td class="py-3 px-3 font-extrabold">الإجمالي</td><td class="py-3 px-3 num font-bold">${rows.length}</td><td class="py-3 px-3 num font-extrabold text-blue-700">${fmt(grandTotal)} ₪</td><td class="py-3 px-3 text-xs text-slate-400">100%</td></tr>`;
+  document.getElementById('repDetailBody').innerHTML=rows.length?rows.map((e,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(e.date)}</td><td>${catBadge(e.category)}</td><td class="font-medium">${e.employee||'-'}</td><td class="text-slate-600 text-sm">${e.desc||'-'}</td><td class="font-bold num">${fmt(e.amount)} ₪</td></tr>`).join(''):'<tr><td colspan="6" class="text-center text-slate-400 py-6">لا توجد عمليات</td></tr>';
+  document.getElementById('repGrandTotal').textContent=fmt(grandTotal)+' ₪';
+  document.getElementById('repRowCount').textContent=`${rows.length} سجل`;
+  const isArchived = prefix!==currentMonthKey;
+  document.getElementById('printRepSubtitle').textContent=`شهر ${MONTHS_AR[month-1]} ${year}${isArchived?' (مؤرشف)':''}${empF?' — الموظف: '+empF:''}${catF?' — البند: '+catF:''}`;
+  document.getElementById('reportResult').classList.remove('hidden');
+}
+function generateEmpDetailReport(){
+  const empName=document.getElementById('repEmpSelect').value;
+  const from=document.getElementById('repEmpFrom').value;
+  const to=document.getElementById('repEmpTo').value;
+  const cat=document.getElementById('repEmpCat').value;
+  if(!empName){toast('يرجى اختيار موظف','error');return;}
+  const emp=employees.find(e=>e.name===empName);
+  let rows=allExpensesEver().filter(e=>e.employee===empName);
+  if(from)rows=rows.filter(e=>e.date>=from);if(to)rows=rows.filter(e=>e.date<=to);if(cat)rows=rows.filter(e=>e.category===cat);
+  rows.sort((a,b)=>a.date.localeCompare(b.date));
+  const total=rows.reduce((s,e)=>s+Number(e.amount),0);
+  const adv=rows.filter(e=>e.category==='سلف موظفين').reduce((s,e)=>s+Number(e.amount),0);
+  const other=total-adv;
+  document.getElementById('empDetailInfoCard').innerHTML=`<div class="grid grid-cols-1 sm:grid-cols-4 gap-4"><div class="sm:col-span-1"><div class="text-xs text-slate-400 font-semibold uppercase mb-1">الموظف</div><div class="text-xl font-extrabold text-slate-800">${empName}</div>${emp&&emp.title?`<div class="text-sm text-slate-500">${emp.title}</div>`:''}</div><div class="text-center border-r border-slate-100 pr-4"><div class="text-xs text-slate-400 font-semibold mb-1">مجموع السلف</div><div class="text-xl font-extrabold num text-purple-700">${fmt(adv)} ₪</div></div><div class="text-center border-r border-slate-100 pr-4"><div class="text-xs text-slate-400 font-semibold mb-1">مصاريف أخرى</div><div class="text-xl font-extrabold num text-amber-700">${fmt(other)} ₪</div></div><div class="text-center border-r border-slate-100 pr-4"><div class="text-xs text-slate-400 font-semibold mb-1">الإجمالي</div><div class="text-2xl font-extrabold num text-blue-700">${fmt(total)} ₪</div><div class="text-xs text-slate-400">${rows.length} عملية</div></div></div><div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-400">الفترة: ${from?fmtDate(from):'من البداية'} — ${to?fmtDate(to):'حتى الآن'}${cat?' | البند: '+cat:''}</div>`;
+  const cats=['سلف موظفين','صندوق سولار','مصروف سولار','مصروفات مكتبية','صيانة سيارات','اتصالات','مصاريف أخرى'];
+  const cd=cats.map(c=>({c,count:rows.filter(e=>e.category===c).length,total:rows.filter(e=>e.category===c).reduce((s,e)=>s+Number(e.amount),0)})).filter(x=>x.count>0);
+  document.getElementById('empDetailCatBody').innerHTML=cd.map(x=>`<tr><td>${catBadge(x.c)}</td><td class="num">${x.count}</td><td class="font-bold num">${fmt(x.total)} ₪</td></tr>`).join('');
+  document.getElementById('empDetailCatFoot').innerHTML=`<tr style="border-top:2px solid #e2e8f0;"><td class="py-3 px-3 font-extrabold">الإجمالي</td><td class="py-3 px-3 num font-bold">${rows.length}</td><td class="py-3 px-3 num font-extrabold text-blue-700">${fmt(total)} ₪</td></tr>`;
+  document.getElementById('empDetailTxBody').innerHTML=rows.length?rows.map((e,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(e.date)}</td><td>${catBadge(e.category)}</td><td class="text-slate-600 text-sm">${e.desc||'-'}</td><td class="font-bold num">${fmt(e.amount)} ₪</td></tr>`).join(''):'<tr><td colspan="5" class="text-center text-slate-400 py-6">لا توجد عمليات</td></tr>';
+  document.getElementById('empDetailTotal').textContent=fmt(total)+' ₪';document.getElementById('empDetailCount').textContent=`${rows.length} عملية`;
+  document.getElementById('printEmpDetailSub').textContent=`الموظف: ${empName} | ${from?fmtDate(from):'من البداية'} - ${to?fmtDate(to):'حتى الآن'}${cat?' | '+cat:''}`;
+  document.getElementById('empDetailResult').classList.remove('hidden');
+}
+function generateEmpSummary(){
+  const from=document.getElementById('repSumFrom').value;
+  const to=document.getElementById('repSumTo').value;
+  const ae=allExpensesEver();
+  const empNames=[...new Set(ae.filter(e=>e.employee).map(e=>e.employee))];
+  employees.forEach(e=>{if(!empNames.includes(e.name))empNames.push(e.name);});
+  let fexp=ae;if(from)fexp=fexp.filter(e=>e.date>=from);if(to)fexp=fexp.filter(e=>e.date<=to);
+  const rows=empNames.map(name=>{
+    const er=fexp.filter(e=>e.employee===name);
+    const adv=er.filter(e=>e.category==='سلف موظفين').reduce((s,e)=>s+Number(e.amount),0);
+    const other=er.filter(e=>e.category!=='سلف موظفين').reduce((s,e)=>s+Number(e.amount),0);
+    return{name,advances:adv,other,total:adv+other,count:er.length,rows:er};
+  }).filter(r=>r.count>0).sort((a,b)=>b.total-a.total);
+  const gAdv=rows.reduce((s,r)=>s+r.advances,0);const gOth=rows.reduce((s,r)=>s+r.other,0);const gTot=rows.reduce((s,r)=>s+r.total,0);
+  document.getElementById('empSumGrandCards').innerHTML=`
+    <div class="stat-card" style="background:linear-gradient(135deg,#2638f0,#3d57fb);"><div class="text-blue-100 text-xs font-semibold mb-1">إجمالي الكل</div><div class="text-2xl font-extrabold num">${fmt(gTot)}</div><div class="text-blue-200 text-sm">${rows.length} موظف</div></div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#7e22ce,#9333ea);"><div class="text-purple-100 text-xs font-semibold mb-1">إجمالي السلف</div><div class="text-2xl font-extrabold num">${fmt(gAdv)}</div><div class="text-purple-200 text-sm">شيكل</div></div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#b45309,#f59e0b);"><div class="text-amber-100 text-xs font-semibold mb-1">إجمالي المصاريف الأخرى</div><div class="text-2xl font-extrabold num">${fmt(gOth)}</div><div class="text-amber-200 text-sm">شيكل</div></div>`;
+  document.getElementById('empSumBody').innerHTML=rows.length?rows.map((r,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="font-semibold">${r.name}</td><td class="font-bold num ${r.advances>0?'text-purple-700':'text-slate-400'}">${fmt(r.advances)} ₪</td><td class="font-bold num ${r.other>0?'text-amber-700':'text-slate-400'}">${fmt(r.other)} ₪</td><td class="font-extrabold num text-blue-700">${fmt(r.total)} ₪</td><td class="num text-slate-500">${r.count}</td></tr>`).join(''):'<tr><td colspan="6" class="text-center text-slate-400 py-6">لا توجد بيانات</td></tr>';
+  document.getElementById('empSumFoot').innerHTML=`<tr style="border-top:2.5px solid #2638f0;"><td colspan="2" class="py-3 px-3 font-extrabold text-blue-700">المجموع النهائي</td><td class="py-3 px-3 num font-extrabold text-purple-700">${fmt(gAdv)} ₪</td><td class="py-3 px-3 num font-extrabold text-amber-700">${fmt(gOth)} ₪</td><td class="py-3 px-3 num font-extrabold text-blue-700">${fmt(gTot)} ₪</td><td class="py-3 px-3 num font-bold">${rows.reduce((s,r)=>s+r.count,0)}</td></tr>`;
+  document.getElementById('empSumCards').innerHTML=rows.map(r=>{
+    const cats=['سلف موظفين','صندوق سولار','مصروف سولار','مصروفات مكتبية','صيانة سيارات','اتصالات','مصاريف أخرى'];
+    const cr=r.rows.sort((a,b)=>a.date.localeCompare(b.date));
+    const cs=cats.map(c=>({c,count:cr.filter(e=>e.category===c).length,total:cr.filter(e=>e.category===c).reduce((s,e)=>s+Number(e.amount),0)})).filter(x=>x.count>0);
+    const safeId=r.name.replace(/\s/g,'_');
+    return`<div class="card mb-4"><div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleEmpCard('card_${safeId}')"><div class="flex items-center gap-3"><div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#3d57fb,#2638f0);display:flex;align-items:center;justify-content:center;"><span style="color:#fff;font-weight:800;">${r.name.charAt(0)}</span></div><div><div class="font-extrabold text-slate-800">${r.name}</div><div class="text-xs text-slate-400">${r.count} عملية | إجمالي: <span class="font-bold text-blue-700 num">${fmt(r.total)} ₪</span></div></div></div><div class="flex gap-3 items-center"><span class="badge cat-advances">سلف: ${fmt(r.advances)} ₪</span><span class="badge cat-other">أخرى: ${fmt(r.other)} ₪</span><svg id="ch_${safeId}" width="18" height="18" fill="none" stroke="#94a3b8" stroke-width="2.5" viewBox="0 0 24 24" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg></div></div><div id="card_${safeId}" class="hidden mt-3 border-t border-slate-100 pt-3"><div class="overflow-x-auto"><table class="data-table text-xs"><thead><tr><th>البند</th><th>ع</th><th>المبلغ (₪)</th></tr></thead><tbody>${cs.map(x=>`<tr><td>${catBadge(x.c)}</td><td class="num">${x.count}</td><td class="font-bold num">${fmt(x.total)}</td></tr>`).join('')}</tbody></table></div><details class="mt-2"><summary class="text-xs text-blue-600 font-semibold cursor-pointer">عرض جميع الحركات (${cr.length})</summary><div class="overflow-x-auto mt-2"><table class="data-table text-xs"><thead><tr><th>#</th><th>التاريخ</th><th>البند</th><th>البيان</th><th>المبلغ (₪)</th></tr></thead><tbody>${cr.map((e,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(e.date)}</td><td>${catBadge(e.category)}</td><td class="text-slate-600">${e.desc||'-'}</td><td class="font-bold num">${fmt(e.amount)}</td></tr>`).join('')}</tbody></table></div></details></div></div>`;
+  }).join('');
+  document.getElementById('printEmpSumSub').textContent=`الفترة: ${from?fmtDate(from):'من البداية'} — ${to?fmtDate(to):'حتى الآن'}`;
+  document.getElementById('empSummaryResult').classList.remove('hidden');
+}
+function toggleEmpCard(id){const el=document.getElementById(id);const ch=document.getElementById('ch_'+id.replace('card_',''));const h=el.classList.toggle('hidden');if(ch)ch.style.transform=h?'':'rotate(180deg)';}
+
+/* =========================================================  ARCHIVES PAGE  ========================================================= */
+function populateArchiveSelect(){
+  const el=document.getElementById('archiveSelect');
+  const keys=Object.keys(archives).sort().reverse();
+  el.innerHTML='<option value="">-- اختر شهراً --</option>';
+  keys.forEach(k=>{
+    const[y,m]=k.split('-');
+    el.innerHTML+=`<option value="${k}">${MONTHS_AR[parseInt(m)-1]} ${y}</option>`;
+  });
+  document.getElementById('noArchiveMsg').classList.toggle('hidden', keys.length>0);
+  document.getElementById('archiveResult').classList.add('hidden');
+}
+function loadArchiveView(){
+  const key=document.getElementById('archiveSelect').value;
+  if(!key){document.getElementById('archiveResult').classList.add('hidden');return;}
+  const data=archives[key];
+  if(!data){toast('لم يتم العثور على بيانات هذا الشهر','error');return;}
+  const[y,m]=key.split('-');
+  const monthName=`${MONTHS_AR[parseInt(m)-1]} ${y}`;
+  document.getElementById('archiveBannerText').textContent=`أنت تستعرض أرشيف شهر: ${monthName} — تمت الأرشفة في ${new Date(data.archivedAt).toLocaleDateString('ar-EG')}`;
+  document.getElementById('printArchiveSub').textContent=`الشهر: ${monthName}`;
+
+  const exp=data.expenses||[], wd=data.workDays||[], db=data.dlgDebts||[];
+  const total=exp.reduce((s,e)=>s+Number(e.amount),0);
+  const totalWork=wd.reduce((s,w)=>s+Number(w.rate),0);
+  const totalDebt=db.reduce((s,d)=>s+Number(d.amount),0);
+
+  document.getElementById('archStatCards').innerHTML=`
+    <div class="stat-card" style="background:linear-gradient(135deg,#2638f0,#3d57fb);"><div class="text-blue-100 text-xs font-semibold mb-1">إجمالي مصاريف الشهر</div><div class="text-2xl font-extrabold num">${fmt(total)}</div><div class="text-blue-200 text-sm">${exp.length} عملية</div></div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#065f46,#059669);"><div class="text-emerald-100 text-xs font-semibold mb-1">بدل المندوبين</div><div class="text-2xl font-extrabold num">${fmt(totalWork)}</div><div class="text-emerald-200 text-sm">${wd.length} يوم عمل</div></div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#b91c1c,#ef4444);"><div class="text-red-100 text-xs font-semibold mb-1">ديون المندوبين</div><div class="text-2xl font-extrabold num">${fmt(totalDebt)}</div><div class="text-red-200 text-sm">${db.length} دين</div></div>`;
+
+  const cats=['سلف موظفين','صندوق سولار','مصروف سولار','مصروفات مكتبية','صيانة سيارات','اتصالات','مصاريف أخرى'];
+  const cd=cats.map(c=>({c,count:exp.filter(e=>e.category===c).length,total:exp.filter(e=>e.category===c).reduce((s,e)=>s+Number(e.amount),0)})).filter(x=>x.count>0);
+  document.getElementById('archCatBody').innerHTML=cd.map(x=>`<tr><td>${catBadge(x.c)}</td><td class="num">${x.count}</td><td class="font-bold num">${fmt(x.total)} ₪</td></tr>`).join('');
+  document.getElementById('archCatFoot').innerHTML=`<tr style="border-top:2px solid #e2e8f0;"><td class="py-3 px-3 font-extrabold">الإجمالي</td><td class="py-3 px-3 num font-bold">${exp.length}</td><td class="py-3 px-3 num font-extrabold text-blue-700">${fmt(total)} ₪</td></tr>`;
+
+  document.getElementById('archExpBody').innerHTML=exp.length?[...exp].sort((a,b)=>a.date.localeCompare(b.date)).map((e,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(e.date)}</td><td>${catBadge(e.category)}</td><td>${e.employee||'-'}</td><td class="text-slate-600 text-sm">${e.desc||'-'}</td><td class="font-bold num">${fmt(e.amount)} ₪</td></tr>`).join(''):'<tr><td colspan="6" class="text-center text-slate-400 py-6">لا توجد مصاريف</td></tr>';
+
+  document.getElementById('archWorkBody').innerHTML=wd.length?[...wd].sort((a,b)=>a.date.localeCompare(b.date)).map((w,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(w.date)}</td><td class="font-semibold">${w.empName}</td><td class="font-bold num text-emerald-700">${fmt(w.rate)} ₪</td><td class="text-slate-500 text-sm">${w.note||'-'}</td></tr>`).join(''):'<tr><td colspan="5" class="text-center text-slate-400 py-6">لا توجد أيام عمل</td></tr>';
+  document.getElementById('archWorkFoot').innerHTML=`<tr style="border-top:2px solid #e2e8f0;"><td colspan="3" class="py-3 px-3 font-extrabold">الإجمالي</td><td class="py-3 px-3 num font-extrabold text-emerald-700">${fmt(totalWork)} ₪</td><td></td></tr>`;
+
+  document.getElementById('archDebtBody').innerHTML=db.length?[...db].sort((a,b)=>a.date.localeCompare(b.date)).map((d,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td class="num">${fmtDate(d.date)}</td><td class="font-semibold">${d.empName}</td><td><span class="badge cat-other">${d.type}</span></td><td class="text-slate-600 text-sm">${d.note||'-'}</td><td class="font-bold num text-red-600">${fmt(d.amount)} ₪</td></tr>`).join(''):'<tr><td colspan="6" class="text-center text-slate-400 py-6">لا توجد ديون</td></tr>';
+  document.getElementById('archDebtFoot').innerHTML=`<tr style="border-top:2px solid #fecaca;"><td colspan="5" class="py-3 px-3 font-extrabold text-red-700">إجمالي الديون</td><td class="py-3 px-3 num font-extrabold text-red-700">${fmt(totalDebt)} ₪</td></tr>`;
+
+  document.getElementById('archiveResult').classList.remove('hidden');
+}
+
+/* =========================================================  PRINT SWAP  ========================================================= */
+function swapPrint(targetId){
+  const all=['printArea','printArea2','printAreaEmpDetail','printAreaEmpSummary','printAreaDlgStmt','printAreaDlgSum','printAreaArchive','printAreaVacBal','printAreaVacSum'];
+  all.forEach(id=>{const el=document.getElementById(id);if(el)el.id='__bk_'+id;});
+  const target=document.getElementById('__bk_'+targetId);
+  if(!target){all.forEach(id=>{const el=document.getElementById('__bk_'+id);if(el)el.id=id;});return;}
+  target.id='printArea';
+  window.print();
+  target.id=targetId;
+  all.forEach(id=>{if(id===targetId)return;const el=document.getElementById('__bk_'+id);if(el)el.id=id;});
+}
+
+/* =========================================================  BACKUP (includes archives)  ========================================================= */
+function exportData(){
+  const payload=JSON.stringify({expenses,employees,solarEntries,workDays,dlgDebts,archives,currentMonthKey,vacations,exportedAt:new Date().toISOString()},null,2);
+  const blob=new Blob([payload],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`company-backup-${todayISO()}.json`;a.click();URL.revokeObjectURL(url);
+  toast('تم التصدير ✓');
+}
+function importData(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(Array.isArray(data.expenses)){expenses=data.expenses;saveData('expenses',expenses);}
+      if(Array.isArray(data.employees)){employees=data.employees;saveData('employees',employees);}
+      if(Array.isArray(data.solarEntries)){solarEntries=data.solarEntries;saveData('solarEntries',solarEntries);}
+      if(Array.isArray(data.workDays)){workDays=data.workDays;saveData('workDays',workDays);}
+      if(Array.isArray(data.dlgDebts)){dlgDebts=data.dlgDebts;saveData('dlgDebts',dlgDebts);}
+      if(data.archives&&typeof data.archives==='object'){archives=data.archives;saveObj('archives',archives);}
+      if(data.currentMonthKey){currentMonthKey=data.currentMonthKey;localStorage.setItem(STORAGE_KEYS.currentMonthKey,currentMonthKey);}
+      if(Array.isArray(data.vacations)){vacations=data.vacations;saveData('vacations',vacations);}
+      toast('تم الاستيراد ✓');renderDashboard();
+    }catch{toast('ملف JSON غير صالح','error');}
+  };
+  reader.readAsText(file);event.target.value='';
+}
+
+/* =========================================================  INIT  ========================================================= */
+/* =========================================================
+   VACATIONS SYSTEM
+   vacations: [{id, empName, type, from, to, days, note, createdAt}]
+   vacSettings: { annualDays, sickDays, emergencyDays, excludeWeekends, carryOver }
+   vacOverrides: { [empName]: { annualDays, sickDays, emergencyDays, hireDate } }
+========================================================= */
+let vacations   = loadData('vacations');
+let vacSettings = (() => { try { return JSON.parse(localStorage.getItem('cet_vacSettings')) || {}; } catch { return {}; } })();
+let vacOverrides= (() => { try { return JSON.parse(localStorage.getItem('cet_vacOverrides')) || {}; } catch { return {}; } })();
+
+// Defaults if not set
+function getGlobalSetting(key, def){ return vacSettings[key] !== undefined ? vacSettings[key] : def; }
+function getAnnualEntitlement(empName){ return vacOverrides[empName]?.annualDays    ?? getGlobalSetting('annualDays', 14); }
+function getSickEntitlement(empName)  { return vacOverrides[empName]?.sickDays      ?? getGlobalSetting('sickDays', 7); }
+function getEmergencyEntitlement(empName){ return vacOverrides[empName]?.emergencyDays ?? getGlobalSetting('emergencyDays', 3); }
+
+/* ─── Colour map for vac types ─── */
+const VAC_STYLE = {
+  'سنوية':      {bg:'#dbeafe',color:'#1d4ed8', cls:'cat-vac-annual',    emoji:'🏖️'},
+  'مرضية':      {bg:'#dcfce7',color:'#15803d', cls:'cat-vac-sick',      emoji:'🏥'},
+  'طارئة':      {bg:'#fef3c7',color:'#b45309', cls:'cat-vac-emergency', emoji:'⚡'},
+  'بدون راتب': {bg:'#fee2e2',color:'#b91c1c', cls:'cat-vac-unpaid',    emoji:'💸'},
+  'أمومة':      {bg:'#fce7f3',color:'#9d174d', cls:'cat-vac-maternity', emoji:'👶'},
+  'أخرى':       {bg:'#f1f5f9',color:'#475569', cls:'cat-vac-other',     emoji:'📋'},
+};
+function vacBadge(type){
+  const s=VAC_STYLE[type]||VAC_STYLE['أخرى'];
+  return`<span class="badge ${s.cls}">${s.emoji} ${type}</span>`;
+}
+
+/* ─── Day calculation (optionally excluding weekends Fri+Sat) ─── */
+function calcDaysBetween(fromStr, toStr){
+  const excWknd = getGlobalSetting('excludeWeekends', false);
+  let count = 0;
+  let cur = new Date(fromStr);
+  const end = new Date(toStr);
+  while(cur <= end){
+    const d = cur.getDay(); // 0=Sun ... 5=Fri 6=Sat
+    if(!excWknd || (d !== 5 && d !== 6)) count++;
+    cur.setDate(cur.getDate()+1);
+  }
+  return count;
+}
+
+/* ─── Populate selects ─── */
+function populateVacSelects(){
+  ['vacEmpSel','vacBalEmp','vacLogEmpFilter','setEmpOverride'].forEach(id => populateSelect(id, id==='vacLogEmpFilter'));
+}
+
+/* ─── Live preview of days ─── */
+function calcVacDays(){
+  const f=document.getElementById('vacFrom').value;
+  const t=document.getElementById('vacTo').value;
+  const prev=document.getElementById('vacDaysPreview');
+  if(!f||!t||f>t){prev.classList.add('hidden');return;}
+  const days=calcDaysBetween(f,t);
+  const excWknd=getGlobalSetting('excludeWeekends',false);
+  prev.textContent=`⟵ ${days} يوم عمل${excWknd?' (باستثناء عطلة نهاية الأسبوع)':''}`;
+  prev.classList.remove('hidden');
+}
+
+/* ─── Quick stats fill when employee selected on register form ─── */
+function fillDefaultVacRate(){
+  const empName=document.getElementById('vacEmpSel').value;
+  const box=document.getElementById('vacEmpQuickStats');
+  if(!empName){box.style.display='none';return;}
+  const yr=new Date().getFullYear();
+  const stats=computeVacStats(empName, yr);
+  box.style.display='';
+  document.getElementById('vacEmpQuickStatsBody').innerHTML=`
+    <div class="grid grid-cols-3 gap-3 text-center">
+      <div class="rounded-xl p-3" style="background:#dbeafe;">
+        <div class="text-xs font-semibold text-blue-700 mb-1">🏖️ سنوي</div>
+        <div class="font-extrabold text-lg num text-blue-800">${stats.annualLeft}</div>
+        <div class="text-xs text-blue-600">متبقي من ${stats.annualEntitle}</div>
+      </div>
+      <div class="rounded-xl p-3" style="background:#dcfce7;">
+        <div class="text-xs font-semibold text-emerald-700 mb-1">🏥 مرضي</div>
+        <div class="font-extrabold text-lg num text-emerald-800">${stats.sickLeft}</div>
+        <div class="text-xs text-emerald-600">متبقي من ${stats.sickEntitle}</div>
+      </div>
+      <div class="rounded-xl p-3" style="background:#fef3c7;">
+        <div class="text-xs font-semibold text-amber-700 mb-1">⚡ طارئة</div>
+        <div class="font-extrabold text-lg num text-amber-800">${stats.emergencyLeft}</div>
+        <div class="text-xs text-amber-600">متبقي من ${stats.emergencyEntitle}</div>
+      </div>
+    </div>
+    <div class="text-xs text-slate-400 mt-2 text-center">السنة الحالية ${yr}</div>`;
+}
+
+/* ─── Core stats computation for an employee + year ─── */
+function computeVacStats(empName, year){
+  const yearStr = String(year);
+  const empVacs = vacations.filter(v=>v.empName===empName && v.from && v.from.startsWith(yearStr));
+  const usedAnnual    = empVacs.filter(v=>v.type==='سنوية')     .reduce((s,v)=>s+Number(v.days),0);
+  const usedSick      = empVacs.filter(v=>v.type==='مرضية')     .reduce((s,v)=>s+Number(v.days),0);
+  const usedEmergency = empVacs.filter(v=>v.type==='طارئة')     .reduce((s,v)=>s+Number(v.days),0);
+  const usedUnpaid    = empVacs.filter(v=>v.type==='بدون راتب').reduce((s,v)=>s+Number(v.days),0);
+  const usedOther     = empVacs.filter(v=>!['سنوية','مرضية','طارئة','بدون راتب'].includes(v.type)).reduce((s,v)=>s+Number(v.days),0);
+  const totalUsed     = empVacs.reduce((s,v)=>s+Number(v.days),0);
+  const annualEntitle    = getAnnualEntitlement(empName);
+  const sickEntitle      = getSickEntitlement(empName);
+  const emergencyEntitle = getEmergencyEntitlement(empName);
+  return {
+    empVacs, usedAnnual, usedSick, usedEmergency, usedUnpaid, usedOther, totalUsed,
+    annualEntitle, sickEntitle, emergencyEntitle,
+    annualLeft:    Math.max(0, annualEntitle    - usedAnnual),
+    sickLeft:      Math.max(0, sickEntitle      - usedSick),
+    emergencyLeft: Math.max(0, emergencyEntitle - usedEmergency),
+    annualExceeded:    Math.max(0, usedAnnual    - annualEntitle),
+    sickExceeded:      Math.max(0, usedSick      - sickEntitle),
+    emergencyExceeded: Math.max(0, usedEmergency - emergencyEntitle),
+  };
+}
+
+/* ─── ADD VACATION ─── */
+function addVacation(){
+  const empName = document.getElementById('vacEmpSel').value;
+  const type    = document.getElementById('vacType').value;
+  const from    = document.getElementById('vacFrom').value;
+  const to      = document.getElementById('vacTo').value;
+  const note    = document.getElementById('vacNote').value.trim();
+  if(!empName){toast('اختر الموظف','error');return;}
+  if(!from||!to){toast('حدد تاريخ البداية والنهاية','error');return;}
+  if(from>to){toast('تاريخ البداية يجب أن يكون قبل النهاية','error');return;}
+  const days = calcDaysBetween(from, to);
+  if(days<1){toast('لا توجد أيام عمل في هذه الفترة','error');return;}
+  // Check entitlement warning for annual/sick/emergency
+  const yr = from.slice(0,4);
+  const stats = computeVacStats(empName, parseInt(yr));
+  if(type==='سنوية' && (stats.usedAnnual+days) > stats.annualEntitle){
+    if(!confirm(`تحذير: سيتجاوز الرصيد السنوي (${stats.annualEntitle} يوم). المتبقي: ${stats.annualLeft} يوم. هل تريد الاستمرار؟`)) return;
+  }
+  if(type==='مرضية' && (stats.usedSick+days) > stats.sickEntitle){
+    if(!confirm(`تحذير: سيتجاوز رصيد المرضية (${stats.sickEntitle} يوم). المتبقي: ${stats.sickLeft} يوم. هل تريد الاستمرار؟`)) return;
+  }
+  vacations.push({id:uid(), empName, type, from, to, days, note, createdAt:new Date().toISOString()});
+  saveData('vacations', vacations);
+  ['vacFrom','vacTo','vacNote'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('vacDaysPreview').classList.add('hidden');
+  renderVacationsLog();
+  fillDefaultVacRate();
+  toast(`تم تسجيل الإجازة — ${days} يوم ✓`);
+}
+
+/* ─── DELETE VACATION ─── */
+function deleteVacation(id){
+  if(!confirm('حذف هذه الإجازة؟')) return;
+  vacations = vacations.filter(v=>v.id!==id);
+  saveData('vacations', vacations);
+  renderVacationsLog();
+  toast('تم الحذف');
+}
+
+/* ─── RENDER LOG ─── */
+function renderVacationsLog(){
+  populateVacSelects();
+  const empF  = document.getElementById('vacLogEmpFilter')?.value||'';
+  const typeF = document.getElementById('vacLogTypeFilter')?.value||'';
+  const yearF = document.getElementById('vacLogYear')?.value||'';
+  let rows = [...vacations];
+  if(empF)  rows = rows.filter(v=>v.empName===empF);
+  if(typeF) rows = rows.filter(v=>v.type===typeF);
+  if(yearF) rows = rows.filter(v=>v.from&&v.from.startsWith(yearF));
+  rows.sort((a,b)=>b.from.localeCompare(a.from));
+  const totalDays = rows.reduce((s,v)=>s+Number(v.days),0);
+  document.getElementById('vacLogCount').textContent = `${rows.length} إجازة`;
+  document.getElementById('vacLogTotal').textContent = totalDays;
+  const tbody = document.getElementById('vacLogBody');
+  tbody.innerHTML = rows.length ? rows.map((v,i)=>`
+    <tr>
+      <td class="num text-slate-400">${i+1}</td>
+      <td class="font-semibold">${v.empName}</td>
+      <td>${vacBadge(v.type)}</td>
+      <td class="num">${fmtDate(v.from)}</td>
+      <td class="num">${fmtDate(v.to)}</td>
+      <td><span class="badge" style="background:#f0fdf4;color:#166534;font-size:13px;"><strong>${v.days}</strong> يوم</span></td>
+      <td class="text-slate-500 text-sm">${v.note||'-'}</td>
+      <td><button class="btn btn-danger text-xs py-1 px-2" onclick="deleteVacation('${v.id}')">حذف</button></td>
+    </tr>`).join('')
+  : '<tr><td colspan="8" class="text-center text-slate-400 py-8">لا توجد إجازات</td></tr>';
+}
+
+/* ─── BALANCE REPORT ─── */
+function generateVacBalance(){
+  const empName = document.getElementById('vacBalEmp').value;
+  const year    = parseInt(document.getElementById('vacBalYear').value || new Date().getFullYear());
+  if(!empName){toast('اختر الموظف','error');return;}
+  const emp   = employees.find(e=>e.name===empName);
+  const stats = computeVacStats(empName, year);
+  const hireDate = vacOverrides[empName]?.hireDate || '';
+  const yearsInCompany = hireDate ? Math.floor((new Date()-new Date(hireDate))/(365.25*24*3600*1000)) : null;
+
+  // Header
+  document.getElementById('vacBalHeader').innerHTML=`
+    <div class="flex flex-wrap gap-4 items-center">
+      <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#3d57fb,#2638f0);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <span style="color:#fff;font-weight:800;font-size:22px;">${empName.charAt(0)}</span>
+      </div>
+      <div class="flex-1">
+        <div class="text-xl font-extrabold text-slate-800">${empName}</div>
+        ${emp?.title?`<div class="text-sm text-slate-500">${emp.title}</div>`:''}
+        ${hireDate?`<div class="text-xs text-slate-400 mt-0.5">تاريخ التعيين: ${fmtDate(hireDate)} — ${yearsInCompany} سنة في الشركة</div>`:''}
+      </div>
+      <div class="text-sm text-slate-500 font-semibold">السنة: <span class="text-blue-700 font-extrabold num">${year}</span></div>
+    </div>`;
+
+  // Balance cards
+  const cards=[
+    {label:'رصيد الإجازة السنوية',entitle:stats.annualEntitle,used:stats.usedAnnual,left:stats.annualLeft,exceeded:stats.annualExceeded,color:'#1d4ed8',bg:'#dbeafe',emoji:'🏖️'},
+    {label:'رصيد الإجازة المرضية',entitle:stats.sickEntitle,  used:stats.usedSick,  left:stats.sickLeft,  exceeded:stats.sickExceeded,  color:'#15803d',bg:'#dcfce7',emoji:'🏥'},
+    {label:'رصيد إجازة الطارئة',  entitle:stats.emergencyEntitle,used:stats.usedEmergency,left:stats.emergencyLeft,exceeded:stats.emergencyExceeded,color:'#b45309',bg:'#fef3c7',emoji:'⚡'},
+    {label:'إجازات بدون راتب',    entitle:null,used:stats.usedUnpaid,left:null,exceeded:0,color:'#b91c1c',bg:'#fee2e2',emoji:'💸'},
+  ];
+  document.getElementById('vacBalCards').innerHTML=cards.map(c=>`
+    <div class="rounded-xl p-4" style="background:${c.bg};border:1.5px solid ${c.color}22;">
+      <div class="text-xs font-bold mb-2" style="color:${c.color};">${c.emoji} ${c.label}</div>
+      ${c.entitle!==null?`
+        <div class="text-2xl font-extrabold num" style="color:${c.color};">${c.left} <span class="text-sm font-normal">يوم متبقي</span></div>
+        <div class="text-xs mt-1" style="color:${c.color};">مستخدم: ${c.used} / ${c.entitle} يوم</div>
+        ${c.exceeded>0?`<div class="text-xs font-bold mt-1 text-red-600">⚠️ تجاوز بـ ${c.exceeded} يوم</div>`:''}
+      `:`
+        <div class="text-2xl font-extrabold num" style="color:${c.color};">${c.used} <span class="text-sm font-normal">يوم</span></div>
+        <div class="text-xs mt-1" style="color:${c.color};">مستخدم هذه السنة</div>
+      `}
+    </div>`).join('');
+
+  // Progress bars
+  document.getElementById('vacBalProgress').innerHTML=`
+    <div class="section-title" style="font-size:15px;margin-bottom:14px;">نسبة استهلاك الرصيد</div>
+    ${[
+      {label:'🏖️ سنوية', used:stats.usedAnnual, total:stats.annualEntitle, color:'#3b82f6'},
+      {label:'🏥 مرضية', used:stats.usedSick,   total:stats.sickEntitle,   color:'#10b981'},
+      {label:'⚡ طارئة', used:stats.usedEmergency,total:stats.emergencyEntitle,color:'#f59e0b'},
+    ].map(bar=>{
+      const pct=bar.total>0?Math.min(100,Math.round((bar.used/bar.total)*100)):0;
+      const exceeded=bar.used>bar.total;
+      return`<div class="mb-4">
+        <div class="flex justify-between text-sm font-semibold mb-1">
+          <span>${bar.label}</span>
+          <span class="${exceeded?'text-red-600 font-extrabold':'text-slate-600'}">${bar.used} / ${bar.total} يوم (${pct}%)</span>
+        </div>
+        <div class="vac-gauge">
+          <div class="vac-gauge-fill" style="width:${pct}%;background:${exceeded?'#ef4444':bar.color};"></div>
+        </div>
+      </div>`;
+    }).join('')}`;
+
+  // By type
+  const types = ['سنوية','مرضية','طارئة','بدون راتب','أمومة','أخرى'];
+  const typeRows = types.map(t=>({t, cnt:stats.empVacs.filter(v=>v.type===t).length, days:stats.empVacs.filter(v=>v.type===t).reduce((s,v)=>s+Number(v.days),0)})).filter(x=>x.cnt>0);
+  document.getElementById('vacBalTypeBody').innerHTML = typeRows.length
+    ? typeRows.map(x=>`<tr><td>${vacBadge(x.t)}</td><td class="num">${x.cnt}</td><td class="font-bold num">${x.days} يوم</td></tr>`).join('')
+    : '<tr><td colspan="3" class="text-center text-slate-400 py-4">لا توجد إجازات</td></tr>';
+  document.getElementById('vacBalTypeFoot').innerHTML=`
+    <tr style="border-top:2px solid #e2e8f0;">
+      <td class="py-3 px-3 font-extrabold">الإجمالي</td>
+      <td class="py-3 px-3 num font-bold">${stats.empVacs.length}</td>
+      <td class="py-3 px-3 num font-extrabold text-blue-700">${stats.totalUsed} يوم</td>
+    </tr>`;
+
+  // Detailed list
+  const sorted=[...stats.empVacs].sort((a,b)=>a.from.localeCompare(b.from));
+  document.getElementById('vacBalDetailBody').innerHTML=sorted.length
+    ? sorted.map((v,i)=>`<tr><td class="num text-slate-400">${i+1}</td><td>${vacBadge(v.type)}</td><td class="num">${fmtDate(v.from)}</td><td class="num">${fmtDate(v.to)}</td><td class="font-bold num">${v.days} يوم</td><td class="text-slate-500 text-sm">${v.note||'-'}</td></tr>`).join('')
+    : '<tr><td colspan="6" class="text-center text-slate-400 py-4">لا توجد إجازات هذه السنة</td></tr>';
+
+  document.getElementById('printVacBalSub').textContent=`الموظف: ${empName} — السنة: ${year}`;
+  document.getElementById('vacBalResult').classList.remove('hidden');
+}
+
+/* ─── SUMMARY ALL EMPLOYEES ─── */
+function generateVacSummary(){
+  const year     = parseInt(document.getElementById('vacSumYear').value) || null;
+  const typeF    = document.getElementById('vacSumType').value;
+  const yearStr  = year ? String(year) : null;
+  const empNames = [...new Set([...employees.map(e=>e.name), ...vacations.map(v=>v.empName)])];
+  let fv = [...vacations];
+  if(yearStr) fv = fv.filter(v=>v.from&&v.from.startsWith(yearStr));
+  if(typeF)   fv = fv.filter(v=>v.type===typeF);
+
+  const rows = empNames.map(name=>{
+    const ev  = fv.filter(v=>v.empName===name);
+    const byType = t => ev.filter(v=>v.type===t).reduce((s,v)=>s+Number(v.days),0);
+    const annual    = byType('سنوية');
+    const sick      = byType('مرضية');
+    const emergency = byType('طارئة');
+    const unpaid    = byType('بدون راتب');
+    const other     = ev.filter(v=>!['سنوية','مرضية','طارئة','بدون راتب'].includes(v.type)).reduce((s,v)=>s+Number(v.days),0);
+    const total     = ev.reduce((s,v)=>s+Number(v.days),0);
+    const annualLeft = year ? Math.max(0, getAnnualEntitlement(name) - annual) : null;
+    return{name, annual, sick, emergency, unpaid, other, total, annualLeft, count:ev.length};
+  }).filter(r=>r.count>0).sort((a,b)=>b.total-a.total);
+
+  const gAnnual=rows.reduce((s,r)=>s+r.annual,0);
+  const gSick  =rows.reduce((s,r)=>s+r.sick,0);
+  const gTotal =rows.reduce((s,r)=>s+r.total,0);
+
+  document.getElementById('vacSumCards').innerHTML=`
+    <div class="stat-card" style="background:linear-gradient(135deg,#1e40af,#3b82f6);">
+      <div class="text-blue-100 text-xs font-semibold mb-1">إجمالي أيام الإجازات</div>
+      <div class="text-3xl font-extrabold num">${gTotal}</div>
+      <div class="text-blue-200 text-sm">${rows.length} موظف لديه إجازات</div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#065f46,#059669);">
+      <div class="text-emerald-100 text-xs font-semibold mb-1">🏖️ إجمالي السنوية</div>
+      <div class="text-3xl font-extrabold num">${gAnnual}</div>
+      <div class="text-emerald-200 text-sm">يوم</div>
+    </div>
+    <div class="stat-card" style="background:linear-gradient(135deg,#065f46,#10b981);">
+      <div class="text-emerald-100 text-xs font-semibold mb-1">🏥 إجمالي المرضية</div>
+      <div class="text-3xl font-extrabold num">${gSick}</div>
+      <div class="text-emerald-200 text-sm">يوم</div>
+    </div>`;
+
+  document.getElementById('vacSumBody').innerHTML = rows.length
+    ? rows.map((r,i)=>{
+        const leftCell = r.annualLeft!==null
+          ? `<span class="badge" style="background:${r.annualLeft===0?'#fee2e2':'#dcfce7'};color:${r.annualLeft===0?'#b91c1c':'#15803d'};">${r.annualLeft} يوم</span>`
+          : '—';
+        return`<tr>
+          <td class="num text-slate-400">${i+1}</td>
+          <td class="font-semibold">${r.name}</td>
+          <td class="num font-bold text-blue-700">${r.annual||'—'}</td>
+          <td class="num font-bold text-emerald-700">${r.sick||'—'}</td>
+          <td class="num font-bold text-amber-700">${r.emergency||'—'}</td>
+          <td class="num font-bold text-red-600">${r.unpaid||'—'}</td>
+          <td class="num text-slate-500">${r.other||'—'}</td>
+          <td class="num font-extrabold text-slate-800">${r.total}</td>
+          <td>${leftCell}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="9" class="text-center text-slate-400 py-6">لا توجد إجازات</td></tr>';
+
+  document.getElementById('vacSumFoot').innerHTML=`
+    <tr style="border-top:2.5px solid #2638f0;">
+      <td colspan="2" class="py-3 px-3 font-extrabold text-blue-700">الإجمالي الكلي</td>
+      <td class="py-3 px-3 num font-extrabold text-blue-700">${gAnnual}</td>
+      <td class="py-3 px-3 num font-extrabold text-emerald-700">${gSick}</td>
+      <td class="py-3 px-3 num font-extrabold text-amber-700">${rows.reduce((s,r)=>s+r.emergency,0)}</td>
+      <td class="py-3 px-3 num font-extrabold text-red-600">${rows.reduce((s,r)=>s+r.unpaid,0)}</td>
+      <td class="py-3 px-3 num font-extrabold text-slate-500">${rows.reduce((s,r)=>s+r.other,0)}</td>
+      <td class="py-3 px-3 num font-extrabold">${gTotal}</td>
+      <td></td>
+    </tr>`;
+
+  document.getElementById('printVacSumSub').textContent=`${yearStr?'السنة: '+yearStr:'كل السنوات'}${typeF?' | النوع: '+typeF:''}`;
+  document.getElementById('vacSumResult').classList.remove('hidden');
+}
+
+/* ─── SETTINGS ─── */
+function saveVacSettings(){
+  vacSettings={
+    annualDays:    parseInt(document.getElementById('setAnnualDays').value)||14,
+    sickDays:      parseInt(document.getElementById('setSickDays').value)||7,
+    emergencyDays: parseInt(document.getElementById('setEmergencyDays').value)||3,
+    excludeWeekends: document.getElementById('setExcludeWeekends').checked,
+    carryOver:       document.getElementById('setCarryOver').checked,
+  };
+  localStorage.setItem('cet_vacSettings', JSON.stringify(vacSettings));
+  toast('تم حفظ الإعدادات ✓');
+}
+
+function saveEmpVacOverride(){
+  const empName = document.getElementById('setEmpOverride').value;
+  if(!empName){toast('اختر موظفاً','error');return;}
+  const annual    = document.getElementById('setOverrideAnnual').value;
+  const sick      = document.getElementById('setOverrideSick').value;
+  const emergency = document.getElementById('setOverrideEmergency').value;
+  const hireDate  = document.getElementById('setOverrideHireDate').value;
+  vacOverrides[empName]={};
+  if(annual   !=='') vacOverrides[empName].annualDays    = parseInt(annual);
+  if(sick     !=='') vacOverrides[empName].sickDays      = parseInt(sick);
+  if(emergency!=='') vacOverrides[empName].emergencyDays = parseInt(emergency);
+  if(hireDate !=='') vacOverrides[empName].hireDate      = hireDate;
+  localStorage.setItem('cet_vacOverrides', JSON.stringify(vacOverrides));
+  renderOverridesList();
+  toast(`تم حفظ الإعدادات الخاصة لـ ${empName} ✓`);
+}
+
+function loadEmpVacOverride(){
+  const empName = document.getElementById('setEmpOverride').value;
+  const ov = vacOverrides[empName]||{};
+  document.getElementById('setOverrideAnnual').value    = ov.annualDays    ?? '';
+  document.getElementById('setOverrideSick').value      = ov.sickDays      ?? '';
+  document.getElementById('setOverrideEmergency').value = ov.emergencyDays ?? '';
+  document.getElementById('setOverrideHireDate').value  = ov.hireDate      ?? '';
+}
+
+function renderOverridesList(){
+  const keys=Object.keys(vacOverrides);
+  const el=document.getElementById('overridesList');
+  if(!keys.length){el.textContent='لا توجد إعدادات خاصة';return;}
+  el.innerHTML=keys.map(name=>{
+    const ov=vacOverrides[name];
+    const parts=[];
+    if(ov.annualDays!==undefined)    parts.push(`سنوي: ${ov.annualDays}`);
+    if(ov.sickDays!==undefined)      parts.push(`مرضي: ${ov.sickDays}`);
+    if(ov.emergencyDays!==undefined) parts.push(`طارئة: ${ov.emergencyDays}`);
+    if(ov.hireDate)                  parts.push(`تعيين: ${fmtDate(ov.hireDate)}`);
+    return`<div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+      <div><span class="font-semibold">${name}</span><span class="text-slate-400 mr-2">${parts.join(' | ')}</span></div>
+      <button class="btn btn-danger text-xs py-1 px-2" onclick="deleteVacOverride('${name}')">حذف</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteVacOverride(empName){
+  delete vacOverrides[empName];
+  localStorage.setItem('cet_vacOverrides', JSON.stringify(vacOverrides));
+  loadEmpVacOverride();
+  renderOverridesList();
+  toast('تم حذف الإعداد الخاص');
+}
+
+/* ─── Tab switch ─── */
+function switchVacTab(name){
+  ['register','balance','summary','settings'].forEach(t=>{
+    document.getElementById(`vacTab-${t}`).classList.toggle('hidden', t!==name);
+    const btn=document.getElementById(`vacTabBtn-${t}`);
+    if(btn) btn.className = t===name ? 'btn btn-primary' : 'btn btn-secondary';
+  });
+  if(name==='settings'){
+    // Load current settings into form
+    document.getElementById('setAnnualDays').value   = getGlobalSetting('annualDays',14);
+    document.getElementById('setSickDays').value     = getGlobalSetting('sickDays',7);
+    document.getElementById('setEmergencyDays').value= getGlobalSetting('emergencyDays',3);
+    document.getElementById('setExcludeWeekends').checked = getGlobalSetting('excludeWeekends',false);
+    document.getElementById('setCarryOver').checked      = getGlobalSetting('carryOver',false);
+    populateVacSelects();
+    renderOverridesList();
+  }
+  if(name==='balance') populateVacSelects();
+  if(name==='summary') {};
+}
+(function init(){
+  checkAndAutoArchive();
+  document.getElementById('expDate').value=todayISO();
+  renderDashboard();populateEmpSelects();populateEmpFilter();populateSelect('stmtEmp');
+  document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+    overlay.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+  });
+})();
+</script>
+</body>
+</html>
